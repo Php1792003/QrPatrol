@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+
+
+<!-- Fragment với tham số đầy đủ cho search -->
+<th:block th:fragment="pagination(page, baseUrl, params)">
+    <div class="row mt-3" th:if="${page != null && page.totalPages > 0}">
+        <div class="col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start">
+            <div class="dataTables_info" role="status" aria-live="polite">
+                Hiển thị từ <b th:text="${page.number * page.size + 1}"></b>
+                đến <b th:text="${page.number * page.size + page.numberOfElements}"></b>
+                trong tổng số <b th:text="${page.totalElements}"></b> mục
+            </div>
+        </div>
+
+        <div class="col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end">
+            <nav aria-label="Page navigation" th:if="${page.totalPages > 1}">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{${baseUrl}(page=0, size=${page.size},
+                                    keyword=${params?.keyword},
+                                    startDate=${params?.startDate},
+                                    endDate=${params?.endDate})}">«</a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{${baseUrl}(page=${page.number - 1}, size=${page.size},
+                                    keyword=${params?.keyword},
+                                    startDate=${params?.startDate},
+                                    endDate=${params?.endDate})}">‹</a>
+                    </li>
+
+                    <th:block th:with="startPage=${T(java.lang.Math).max(0, page.number - 2)},
+                                       endPage=${T(java.lang.Math).min(page.totalPages - 1, page.number + 2)}">
+                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                            th:classappend="${i == page.number} ? 'active'">
+                            <a class="page-link"
+                               th:href="@{${baseUrl}(page=${i}, size=${page.size},
+                                        keyword=${params?.keyword},
+                                        startDate=${params?.startDate},
+                                        endDate=${params?.endDate})}"
+                               th:text="${i + 1}"></a>
+                        </li>
+                    </th:block>
+
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{${baseUrl}(page=${page.number + 1}, size=${page.size},
+                                    keyword=${params?.keyword},
+                                    startDate=${params?.startDate},
+                                    endDate=${params?.endDate})}">›</a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{${baseUrl}(page=${page.totalPages - 1}, size=${page.size},
+                                    keyword=${params?.keyword},
+                                    startDate=${params?.startDate},
+                                    endDate=${params?.endDate})}">»</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</th:block>
+
+</body>
+</html>

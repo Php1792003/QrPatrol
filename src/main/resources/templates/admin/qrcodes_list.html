@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title='Danh sách Mã QR', content=~{::content}, currentPage='admin_qrcodes')}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block th:fragment="content">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">DANH SÁCH MÃ QR</h1>
+            <p class="text-gray-600 mt-2">Quản lý tất cả mã QR trong hệ thống</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div sec:authorize="hasAuthority('ROLE_ADMIN')" class="flex flex-wrap gap-2">
+            <a th:href="@{/admin/qrcodes/new}"
+               class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Tạo mới
+            </a>
+            <button id="downloadSelectedBtn"
+                    class="bg-accent-600 text-white px-4 py-2 rounded-lg hover:bg-accent-700 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                <i class="fas fa-download mr-2"></i>
+                Tải mục đã chọn
+            </button>
+            <button id="downloadAllBtn"
+                    type="submit"
+                    form="downloadAllForm"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    th:disabled="${qrCodePage.totalElements == 0}">
+                <i class="fas fa-globe mr-2"></i>
+                Tải tất cả (<span th:text="${qrCodePage.totalElements}"></span>)
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-search mr-2 text-primary-600"></i>
+            Tìm kiếm mã QR
+        </h3>
+
+        <form th:action="${#authorization.expression('hasAuthority(''ROLE_ADMIN'')') ? '/admin/qrcodes' : '/viewer/qrcodes'}" method="get">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Keyword Search -->
+                <div class="lg:col-span-2">
+                    <label for="keyword" class="block text-sm font-medium text-gray-700 mb-2">Tìm theo từ khóa</label>
+                    <input type="text"
+                           id="keyword"
+                           name="keyword"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                           placeholder="Vị trí hoặc mô tả..."
+                           th:value="${keyword}">
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label for="startDate" class="block text-sm font-medium text-gray-700 mb-2">Từ ngày tạo</label>
+                    <input type="date"
+                           id="startDate"
+                           name="startDate"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                           th:value="${startDate}">
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label for="endDate" class="block text-sm font-medium text-gray-700 mb-2">Đến ngày tạo</label>
+                    <input type="date"
+                           id="endDate"
+                           name="endDate"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                           th:value="${endDate}">
+                </div>
+            </div>
+
+            <!-- Search Button -->
+            <div class="mt-4 flex justify-end">
+                <button type="submit"
+                        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center">
+                    <i class="fas fa-search mr-2"></i>
+                    Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Hidden Download All Form -->
+    <form sec:authorize="hasAuthority('ROLE_ADMIN')" id="downloadAllForm" th:action="@{/admin/qrcodes/download-all-zip}" method="post" style="display: none;">
+        <input type="hidden" name="keyword" th:value="${keyword}">
+        <input type="hidden" name="startDate" th:value="${startDate}">
+        <input type="hidden" name="endDate" th:value="${endDate}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    </form>
+
+    <!-- Selection Banners -->
+    <div sec:authorize="hasAuthority('ROLE_ADMIN')">
+        <div id="selectAllBanner" class="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg" style="display: none;">
+            Tất cả <b id="itemsOnPageCount"></b> mục trên trang này đã được chọn.
+            <a href="#" id="selectAllMatchingLink" class="font-semibold hover:underline">Chọn tất cả <span id="totalItemsCount"></span> mục khớp với tìm kiếm này.</a>
+        </div>
+        <div id="allSelectedBanner" class="mb-4 bg-accent-50 border border-accent-200 text-accent-800 px-4 py-3 rounded-lg" style="display: none;">
+            Bạn đã chọn tất cả <b id="totalItemsCountBanner"></b> mục khớp với tìm kiếm này.
+            <a href="#" id="clearSelectionLink" class="font-semibold hover:underline">Bỏ chọn.</a>
+        </div>
+    </div>
+
+    <!-- QR Codes Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-900 text-white">
+                <tr>
+                    <th sec:authorize="hasAuthority('ROLE_ADMIN')" class="w-12 px-6 py-4 text-center">
+                        <input type="checkbox" id="selectAllCheckbox" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" title="Chọn tất cả trên trang">
+                    </th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold">Vị trí</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold">Mô tả</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold">Ngày tạo</th>
+                    <th sec:authorize="hasAuthority('VIEWER')" class="px-6 py-4 text-left text-sm font-semibold">Người tạo</th>
+                    <th sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-4 text-center text-sm font-semibold">Hành động</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                <tr th:each="qr : ${qrCodePage.content}" class="hover:bg-gray-50 transition-colors">
+                    <td sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-4 text-center">
+                        <input type="checkbox" class="qr-checkbox rounded border-gray-300 text-primary-600 focus:ring-primary-500" th:value="${qr.idCode}">
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900" th:text="${qr.locationName}"></td>
+                    <td class="px-6 py-4 text-sm text-gray-600" th:text="${qr.description}"></td>
+                    <td class="px-6 py-4 text-sm text-gray-600" th:text="${#temporals.format(qr.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td sec:authorize="hasAuthority('VIEWER')" class="px-6 py-4 text-sm text-gray-600" th:text="${qr.createdBy}"></td>
+                    <td sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-4 text-center">
+                        <div class="flex justify-center space-x-2">
+                            <a th:href="@{/admin/qrcodes/image/{idCode}(idCode=${qr.idCode})}"
+                               target="_blank"
+                               class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                               title="Xem QR">
+                                <i class="fas fa-qrcode text-xs"></i>
+                            </a>
+                            <a th:href="@{/admin/qrcodes/edit/{idCode}(idCode=${qr.idCode})}"
+                               class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center hover:bg-yellow-600 transition-colors"
+                               title="Sửa">
+                                <i class="fas fa-pencil-alt text-xs"></i>
+                            </a>
+                            <a th:href="@{/admin/qrcodes/delete/{idCode}(idCode=${qr.idCode})}"
+                               class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                               title="Xóa"
+                               onclick="return confirm('Bạn có chắc muốn xóa mã này?')">
+                                <i class="fas fa-trash text-xs"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${qrCodePage.empty}">
+                    <td th:attr="colspan=${#authorization.expression('hasAuthority(''ROLE_ADMIN'')') ? '6' : (#authorization.expression('hasAuthority(''VIEWER'')') ? '5' : '4')}"
+                        class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-qrcode text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-lg font-medium">Không có dữ liệu nào khớp</p>
+                            <p class="text-sm">Thử điều chỉnh bộ lọc tìm kiếm của bạn</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${qrCodePage != null && qrCodePage.totalPages > 0}" class="border-t border-gray-200 bg-gray-50 px-6 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
+                <!-- Info -->
+                <div class="text-sm text-gray-700">
+                    Hiển thị từ <span class="font-semibold" th:text="${qrCodePage.number * qrCodePage.size + 1}"></span>
+                    đến <span class="font-semibold" th:text="${qrCodePage.number * qrCodePage.size + qrCodePage.numberOfElements}"></span>
+                    trong tổng số <span class="font-semibold" th:text="${qrCodePage.totalElements}"></span> mục
+                </div>
+
+                <!-- Pagination Controls -->
+                <nav th:if="${qrCodePage.totalPages > 1}" class="flex items-center space-x-1">
+                    <!-- First Page -->
+                    <a th:href="@{/admin/qrcodes(page=0, keyword=${keyword}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${qrCodePage.first} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-lg transition-colors">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+
+                    <!-- Previous Page -->
+                    <a th:href="@{/admin/qrcodes(page=${qrCodePage.number - 1}, keyword=${keyword}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${qrCodePage.first} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 transition-colors">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+
+                    <!-- Page Numbers -->
+                    <th:block th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, qrCodePage.number - 2), T(java.lang.Math).min(qrCodePage.totalPages - 1, qrCodePage.number + 2))}">
+                        <a th:href="@{/admin/qrcodes(page=${i}, keyword=${keyword}, startDate=${startDate}, endDate=${endDate})}"
+                           th:classappend="${i == qrCodePage.number} ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'"
+                           class="px-3 py-2 text-sm font-medium border transition-colors"
+                           th:text="${i + 1}"></a>
+                    </th:block>
+
+                    <!-- Next Page -->
+                    <a th:href="@{/admin/qrcodes(page=${qrCodePage.number + 1}, keyword=${keyword}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${qrCodePage.last} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 transition-colors">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+
+                    <!-- Last Page -->
+                    <a th:href="@{/admin/qrcodes(page=${qrCodePage.totalPages - 1}, keyword=${keyword}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${qrCodePage.last} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-lg transition-colors">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript" sec:authorize="hasAuthority('ROLE_ADMIN')">
+        document.addEventListener("DOMContentLoaded", function() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const qrCheckboxes = document.querySelectorAll('.qr-checkbox');
+            const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+            const selectAllBanner = document.getElementById('selectAllBanner');
+            const allSelectedBanner = document.getElementById('allSelectedBanner');
+            const selectAllMatchingLink = document.getElementById('selectAllMatchingLink');
+            const clearSelectionLink = document.getElementById('clearSelectionLink');
+
+            // Get data from Thymeleaf
+            const totalItems = /*[[${qrCodePage.totalElements}]]*/ 0;
+            const itemsOnPage = /*[[${qrCodePage.numberOfElements}]]*/ 0;
+
+            // Update banner counts
+            if(selectAllBanner) document.getElementById('itemsOnPageCount').textContent = itemsOnPage;
+            if(selectAllBanner) document.getElementById('totalItemsCount').textContent = totalItems;
+            if(allSelectedBanner) document.getElementById('totalItemsCountBanner').textContent = totalItems;
+
+            let isSelectAllMatching = false;
+
+            function updateUI() {
+                const selectedCount = Array.from(qrCheckboxes).filter(cb => cb.checked).length;
+                const allOnPageSelected = selectedCount === itemsOnPage && itemsOnPage > 0;
+
+                // Update download button state
+                downloadSelectedBtn.disabled = selectedCount === 0 && !isSelectAllMatching;
+
+                // Show/hide banners
+                if (selectAllBanner) {
+                    selectAllBanner.style.display = allOnPageSelected && !isSelectAllMatching && totalItems > itemsOnPage ? 'block' : 'none';
+                }
+                if (allSelectedBanner) {
+                    allSelectedBanner.style.display = isSelectAllMatching ? 'block' : 'none';
+                }
+
+                // Update select all checkbox state
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = allOnPageSelected;
+                    selectAllCheckbox.indeterminate = selectedCount > 0 && !allOnPageSelected;
+                }
+            }
+
+            // Event listeners
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', (e) => {
+                    qrCheckboxes.forEach(cb => cb.checked = e.target.checked);
+                    if (!e.target.checked) {
+                        isSelectAllMatching = false;
+                    }
+                    updateUI();
+                });
+            }
+
+            qrCheckboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (!cb.checked) {
+                        isSelectAllMatching = false;
+                    }
+                    updateUI();
+                });
+            });
+
+            if (selectAllMatchingLink) {
+                selectAllMatchingLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    isSelectAllMatching = true;
+                    updateUI();
+                });
+            }
+
+            if (clearSelectionLink) {
+                clearSelectionLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    isSelectAllMatching = false;
+                    qrCheckboxes.forEach(cb => cb.checked = false);
+                    updateUI();
+                });
+            }
+
+            if (downloadSelectedBtn) {
+                downloadSelectedBtn.addEventListener('click', () => {
+                    if (isSelectAllMatching) {
+                        downloadAllBtn.click();
+                        return;
+                    }
+
+                    const selectedIds = Array.from(qrCheckboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+
+                    if (selectedIds.length === 0) return;
+
+                    // Download logic
+                    const buttonText = downloadSelectedBtn.querySelector('i').nextSibling;
+                    const originalText = buttonText.textContent.trim();
+                    buttonText.textContent = ' Đang xử lý...';
+                    downloadSelectedBtn.disabled = true;
+
+                    const csrfToken = /*[[${_csrf.token}]]*/ null;
+                    const csrfHeader = /*[[${_csrf.headerName}]]*/ null;
+
+                    fetch('/admin/qrcodes/download-zip', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                        body: JSON.stringify(selectedIds)
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error('Lỗi mạng hoặc server.');
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = 'qrcodes_selected.zip';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            a.remove();
+                        })
+                        .catch(error => {
+                            console.error('Lỗi khi tải file:', error);
+                            alert('Đã xảy ra lỗi khi tải file đã chọn.');
+                        })
+                        .finally(() => {
+                            buttonText.textContent = originalText;
+                            updateUI();
+                        });
+                });
+            }
+
+            updateUI();
+        });
+    </script>
+</th:block>
+
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title='Quản lý Người dùng', content=~{::content}, currentPage='admin_users')}">
+
+<th:block th:fragment="content">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">QUẢN LÝ NGƯỜI DÙNG</h1>
+      <p class="text-gray-600 mt-2">Quản lý tài khoản và phân quyền người dùng</p>
+    </div>
+    <a th:href="@{/admin/users/new}"
+       class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center">
+      <i class="fas fa-plus mr-2"></i>
+      Thêm mới
+    </a>
+  </div>
+
+  <!-- Alert Messages -->
+  <div th:if="${successMessage}" class="mb-6 bg-accent-50 border border-accent-200 text-accent-800 px-4 py-3 rounded-lg flex items-center" role="alert">
+    <i class="fas fa-check-circle mr-2 text-accent-600"></i>
+    <span th:text="${successMessage}"></span>
+  </div>
+
+  <div th:if="${errorMessage}" class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center" role="alert">
+    <i class="fas fa-exclamation-circle mr-2 text-red-600"></i>
+    <span th:text="${errorMessage}"></span>
+  </div>
+
+  <!-- Search Form -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <i class="fas fa-search mr-2 text-primary-600"></i>
+      Tìm kiếm người dùng
+    </h3>
+
+    <form th:action="@{/admin/users}" method="get">
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <input type="text"
+                 name="keyword"
+                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                 placeholder="Tìm theo Tên đăng nhập hoặc Tên đầy đủ..."
+                 th:value="${keyword}">
+        </div>
+        <button type="submit"
+                class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center">
+          <i class="fas fa-search mr-2"></i>
+          Tìm kiếm
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Users Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <!-- Table Header -->
+    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+        <i class="fas fa-users mr-2 text-primary-600"></i>
+        Danh sách Người dùng
+      </h3>
+    </div>
+
+    <!-- Table Content -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-900 text-white">
+        <tr>
+          <th class="px-6 py-4 text-left text-sm font-semibold">Tên đăng nhập</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold">Tên đầy đủ</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold">Vai trò</th>
+          <th class="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
+          <th class="px-6 py-4 text-center text-sm font-semibold">Hành động</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+        <tr th:each="user : ${userPage.content}" class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 text-sm font-medium text-gray-900">
+            <div class="flex items-center">
+              <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-user text-primary-600 text-xs"></i>
+              </div>
+              <span th:text="${user.username}"></span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-900" th:text="${user.fullName}"></td>
+          <td class="px-6 py-4 text-sm text-gray-600">
+            <div class="flex flex-wrap gap-1">
+                                <span th:each="role, iterStat : ${user.roles}"
+                                      class="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full"
+                                      th:text="${role.nameRole.replace('ROLE_', '')}"></span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-sm">
+                            <span th:if="${user.enabled}"
+                                  class="inline-flex px-2 py-1 text-xs font-medium bg-accent-100 text-accent-800 rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Hoạt động
+                            </span>
+            <span th:unless="${user.enabled}"
+                  class="inline-flex px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                <i class="fas fa-times-circle mr-1"></i>
+                                Khóa
+                            </span>
+          </td>
+          <td class="px-6 py-4 text-center">
+            <div class="flex justify-center space-x-2">
+              <a th:href="@{/admin/users/edit/{idUser}(idUser=${user.idUser})}"
+                 class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center hover:bg-yellow-600 transition-colors"
+                 title="Sửa">
+                <i class="fas fa-edit text-xs"></i>
+              </a>
+              <a th:if="${!#strings.equals(user.username, 'admin')}"
+                 th:href="@{/admin/users/delete/{idUser}(idUser=${user.idUser})}"
+                 class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                 title="Xóa"
+                 onclick="return confirm('Bạn có chắc muốn xóa người dùng này?')">
+                <i class="fas fa-trash text-xs"></i>
+              </a>
+              <span th:if="${#strings.equals(user.username, 'admin')}"
+                    class="w-8 h-8 bg-gray-300 text-gray-500 rounded-full flex items-center justify-center cursor-not-allowed"
+                    title="Không thể xóa admin">
+                                    <i class="fas fa-lock text-xs"></i>
+                                </span>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${userPage.empty}">
+          <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center">
+              <i class="fas fa-users text-4xl text-gray-300 mb-3"></i>
+              <p class="text-lg font-medium">Không có dữ liệu</p>
+              <p class="text-sm">Chưa có người dùng nào được tạo</p>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${userPage != null && userPage.totalPages > 0}" class="border-t border-gray-200 bg-gray-50 px-6 py-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
+        <!-- Info -->
+        <div class="text-sm text-gray-700">
+          Hiển thị từ <span class="font-semibold" th:text="${userPage.number * userPage.size + 1}"></span>
+          đến <span class="font-semibold" th:text="${userPage.number * userPage.size + userPage.numberOfElements}"></span>
+          trong tổng số <span class="font-semibold" th:text="${userPage.totalElements}"></span> mục
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav th:if="${userPage.totalPages > 1}" class="flex items-center space-x-1">
+          <!-- First Page -->
+          <a th:href="@{/admin/users(page=0, keyword=${keyword})}"
+             th:classappend="${userPage.first} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+             class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-lg transition-colors">
+            <i class="fas fa-angle-double-left"></i>
+          </a>
+
+          <!-- Previous Page -->
+          <a th:href="@{/admin/users(page=${userPage.number - 1}, keyword=${keyword})}"
+             th:classappend="${userPage.first} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+             class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 transition-colors">
+            <i class="fas fa-angle-left"></i>
+          </a>
+
+          <!-- Page Numbers -->
+          <th:block th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, userPage.number - 2), T(java.lang.Math).min(userPage.totalPages - 1, userPage.number + 2))}">
+            <a th:href="@{/admin/users(page=${i}, keyword=${keyword})}"
+               th:classappend="${i == userPage.number} ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-100'"
+               class="px-3 py-2 text-sm font-medium border transition-colors"
+               th:text="${i + 1}"></a>
+          </th:block>
+
+          <!-- Next Page -->
+          <a th:href="@{/admin/users(page=${userPage.number + 1}, keyword=${keyword})}"
+             th:classappend="${userPage.last} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+             class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 transition-colors">
+            <i class="fas fa-angle-right"></i>
+          </a>
+
+          <!-- Last Page -->
+          <a th:href="@{/admin/users(page=${userPage.totalPages - 1}, keyword=${keyword})}"
+             th:classappend="${userPage.last} ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'"
+             class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-lg transition-colors">
+            <i class="fas fa-angle-double-right"></i>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </div>
+</th:block>
+
+</html>

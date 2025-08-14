@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title=${pageTitle}, content=~{::content}, currentPage='logs')}">
+
+<th:block th:fragment="content">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6" th:text="${pageTitle}"></h1>
+
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+            <form th:action="@{/admin/logs/save}" th:object="${patrolLog}" method="post" id="logForm">
+                <!-- ID chính của Log -->
+                <input type="hidden" th:field="*{idPatrolLog}"/>
+
+                <div class="space-y-6">
+                    <div th:if="*{idPatrolLog == null}">
+                        <input type="hidden" th:field="*{qrCodeId}" id="selectedQrCodeId"/>
+                        <input type="hidden" th:field="*{userId}" id="selectedUserId"/>
+
+                        <div>
+                            <label for="locationNameInput" class="block text-sm font-medium text-gray-700">Tên Vị trí</label>
+                            <input type="text" id="locationNameInput" list="locationsDatalist" autocomplete="off" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                   placeholder="Gõ để tìm vị trí...">
+                            <datalist id="locationsDatalist">
+                                <option th:each="qr : ${allQrCodes}"
+                                        th:value="${qr.locationName}"
+                                        th:attr="data-id=${qr.idCode}"></option>
+                            </datalist>
+                        </div>
+
+                        <div class="mt-6">
+                            <label for="scannerNameInput" class="block text-sm font-medium text-gray-700">Tên Người quét</label>
+                            <input type="text" id="scannerNameInput" list="scannersDatalist" autocomplete="off" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                   placeholder="Gõ để tìm người quét...">
+                            <datalist id="scannersDatalist">
+                                <option th:each="scanner : ${allScanners}"
+                                        th:value="${scanner.fullName}"
+                                        th:attr="data-id=${scanner.idUser}"></option>
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div th:if="*{idPatrolLog != null}">
+                        <input type="hidden" th:field="*{qrCodeId}"/><input type="hidden" th:field="*{userId}"/>
+                        <div><label class="block text-sm font-medium text-gray-700">Tên vị trí</label><input type="text" th:value="*{locationName}" readonly class="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-100"></div>
+                        <div class="mt-6"><label class="block text-sm font-medium text-gray-700">Tên người quét</label><input type="text" th:value="*{scannerName}" readonly class="mt-1 block w-full px-4 py-2 border rounded-lg bg-gray-100"></div>
+                    </div>
+
+                    <div class="pt-6 border-t mt-6">
+                        <label for="scannedAt" class="block text-sm font-medium text-gray-700">Thời gian quét</gitanos>
+                            <input type="datetime-local" th:field="*{scannedAt}" id="scannedAt" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                    </div>
+                </div>
+
+                <div class="flex justify-end items-center space-x-4 pt-8 mt-8 border-t border-gray-200">
+                    <a th:href="@{/admin/logs}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Hủy</a>
+                    <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script th:if="${patrolLog.idPatrolLog == null}">
+        document.addEventListener('DOMContentLoaded', function() {
+            function setupDatalistBinding(inputId, datalistId, hiddenIdField) {
+                const input = document.getElementById(inputId);
+                const datalist = document.getElementById(datalistId);
+                const hiddenField = document.getElementById(hiddenIdField);
+
+                input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    let selectedId = null;
+
+                    for (const option of datalist.options) {
+                        if (option.value === value) {
+                            selectedId = option.getAttribute('data-id');
+                            break;
+                        }
+                    }
+
+                    hiddenField.value = selectedId;
+                });
+            }
+
+            setupDatalistBinding('locationNameInput', 'locationsDatalist', 'selectedQrCodeId');
+            setupDatalistBinding('scannerNameInput', 'scannersDatalist', 'selectedUserId');
+        });
+    </script>
+</th:block>
+</html>

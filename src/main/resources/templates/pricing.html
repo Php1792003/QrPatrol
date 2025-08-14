@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng giá - QR Patrol System</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- AOS Animation -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Gradient animation */
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .gradient-text {
+      background: linear-gradient(-45deg, #6366F1, #818CF8, #60A5FA, #6366F1);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+
+    /* Pattern background */
+    .pattern-bg {
+      background-color: #f9fafb;
+      background-image:
+              radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(129, 140, 248, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 40% 40%, rgba(96, 165, 250, 0.05) 0%, transparent 50%);
+    }
+
+    /* Pricing card hover effects */
+    .pricing-card {
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Popular badge */
+    .popular-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Feature list animations */
+    .feature-item {
+      transition: all 0.2s ease;
+    }
+
+    .feature-item:hover {
+      transform: translateX(4px);
+    }
+
+    /* Price flip animation */
+    @keyframes priceFlip {
+      0% { transform: rotateY(0deg); }
+      50% { transform: rotateY(90deg); }
+      100% { transform: rotateY(0deg); }
+    }
+
+    .price-flip {
+      animation: priceFlip 0.6s ease-in-out;
+    }
+
+    /* Pulse animation for CTA buttons */
+    .pulse-shadow {
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+<!-- Navigation -->
+<nav class="fixed top-0 w-full bg-white/90 backdrop-blur-lg shadow-sm z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center py-4">
+      <div class="flex items-center space-x-3">
+        <a th:href="@{/}" class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <i class="fas fa-qrcode text-white text-xl"></i>
+          </div>
+          <span class="text-xl font-bold text-gray-900">QR Patrol</span>
+        </a>
+      </div>
+
+      <div class="hidden md:flex items-center space-x-8">
+        <a th:href="@{/}" class="text-gray-600 hover:text-indigo-600 transition-colors">Trang chủ</a>
+        <a th:href="@{/about}" class="text-gray-600 hover:text-indigo-600 transition-colors">Giới thiệu</a>
+        <a th:href="@{/violation-search}" class="text-gray-600 hover:text-indigo-600 transition-colors">Tra cứu</a>
+        <a th:href="@{/pricing}" class="text-indigo-600 font-medium">Bảng giá</a>
+        <a th:href="@{/contact}" class="text-gray-600 hover:text-indigo-600 transition-colors">Liên hệ</a>
+      </div>
+
+      <div class="hidden md:flex items-center space-x-4">
+        <a th:href="@{/login}" class="text-indigo-600 font-medium hover:text-indigo-700">Đăng nhập</a>
+        <a th:href="@{/}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+          Dùng thử
+        </a>
+      </div>
+
+      <div class="md:hidden flex items-center">
+        <button id="mobile-menu-button" class="p-2">
+          <i id="mobile-menu-icon" class="fas fa-bars text-gray-600 text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+    <div class="px-4 pt-2 pb-4 space-y-2">
+      <a th:href="@{/}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Trang chủ</a>
+      <a th:href="@{/about}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Giới thiệu</a>
+      <a th:href="@{/violation-search}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Tra cứu</a>
+      <a th:href="@{/pricing}" class="block py-2 px-2 text-indigo-600 bg-indigo-50 rounded">Bảng giá</a>
+      <a th:href="@{/contact}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Liên hệ</a>
+      <div class="pt-4 mt-4 border-t space-y-3">
+        <a th:href="@{/login}" class="block w-full text-center py-2 px-4 border border-indigo-600 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50">Đăng nhập</a>
+        <a th:href="@{/register}" class="block w-full text-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700">Dùng thử miễn phí</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="pt-24 pb-12 pattern-bg">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center" data-aos="fade-down">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        Bảng giá <span class="gradient-text">QR Patrol</span>
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+        Chọn gói phù hợp với quy mô doanh nghiệp của bạn. Tất cả gói đều bao gồm dùng thử 30 ngày miễn phí.
+      </p>
+
+      <!-- Billing Toggle -->
+      <div class="flex items-center justify-center mb-8">
+        <span class="text-gray-600 mr-3">Thanh toán hàng tháng</span>
+        <div class="relative">
+          <input type="checkbox" id="billing-toggle" class="sr-only" onchange="toggleBilling()">
+          <label for="billing-toggle" class="block w-14 h-8 bg-gray-300 rounded-full cursor-pointer relative">
+            <span class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300"></span>
+          </label>
+        </div>
+        <span class="text-gray-600 ml-3">Thanh toán hàng năm</span>
+        <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">Tiết kiệm 20%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing Cards -->
+<section class="py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+      <!-- Basic Plan -->
+      <div class="pricing-card bg-white rounded-2xl shadow-lg p-8 relative" data-aos="zoom-in" data-aos-delay="100">
+        <div class="text-center">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Cơ bản</h3>
+          <p class="text-gray-600 mb-6">Phù hợp cho doanh nghiệp nhỏ</p>
+
+          <div class="mb-6">
+            <div class="price-container">
+              <span class="text-4xl font-bold text-gray-900 monthly-price">890.000</span>
+              <span class="text-4xl font-bold text-gray-900 yearly-price hidden">712.000</span>
+              <span class="text-lg text-gray-600">₫/tháng</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 yearly-savings hidden">
+              Tiết kiệm 2.136.000₫/năm
+            </p>
+          </div>
+
+          <div class="space-y-4 mb-8">
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lên đến <strong>50 điểm tuần tra</strong></span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lên đến <strong>10 nhân viên</strong></span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Báo cáo cơ bản</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Hỗ trợ email</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>App mobile iOS & Android</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lưu trữ dữ liệu 6 tháng</span>
+            </div>
+          </div>
+
+          <button class="w-full py-3 px-6 border-2 border-indigo-600 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-600 hover:text-white transition-all">
+            Bắt đầu dùng thử
+          </button>
+        </div>
+      </div>
+
+      <!-- Professional Plan (Popular) -->
+      <div class="pricing-card bg-white rounded-2xl shadow-xl p-8 relative transform scale-105" data-aos="zoom-in" data-aos-delay="200">
+        <!-- Popular Badge -->
+        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="popular-badge px-4 py-2 text-white text-sm font-semibold rounded-full">
+                        Phổ biến nhất
+                    </span>
+        </div>
+
+        <div class="text-center">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Chuyên nghiệp</h3>
+          <p class="text-gray-600 mb-6">Phù hợp cho doanh nghiệp vừa</p>
+
+          <div class="mb-6">
+            <div class="price-container">
+              <span class="text-5xl font-bold text-indigo-600 monthly-price">1.890.000</span>
+              <span class="text-5xl font-bold text-indigo-600 yearly-price hidden">1.512.000</span>
+              <span class="text-lg text-gray-600">₫/tháng</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 yearly-savings hidden">
+              Tiết kiệm 4.536.000₫/năm
+            </p>
+          </div>
+
+          <div class="space-y-4 mb-8">
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lên đến <strong>200 điểm tuần tra</strong></span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lên đến <strong>50 nhân viên</strong></span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Báo cáo nâng cao & Dashboard</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Hỗ trợ điện thoại & email</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Quản lý ca làm việc</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Thông báo real-time</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lưu trữ dữ liệu 2 năm</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>API tích hợp cơ bản</span>
+            </div>
+          </div>
+
+          <button class="w-full py-3 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all pulse-shadow">
+            Bắt đầu dùng thử
+          </button>
+        </div>
+      </div>
+
+      <!-- Enterprise Plan -->
+      <div class="pricing-card bg-white rounded-2xl shadow-lg p-8 relative" data-aos="zoom-in" data-aos-delay="300">
+        <div class="text-center">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Doanh nghiệp</h3>
+          <p class="text-gray-600 mb-6">Cho tập đoàn & doanh nghiệp lớn</p>
+
+          <div class="mb-6">
+            <div class="price-container">
+              <span class="text-4xl font-bold text-gray-900 monthly-price">4.990.000</span>
+              <span class="text-4xl font-bold text-gray-900 yearly-price hidden">3.992.000</span>
+              <span class="text-lg text-gray-600">₫/tháng</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 yearly-savings hidden">
+              Tiết kiệm 11.976.000₫/năm
+            </p>
+          </div>
+
+          <div class="space-y-4 mb-8">
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span><strong>Không giới hạn</strong> điểm tuần tra</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span><strong>Không giới hạn</strong> nhân viên</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Báo cáo tùy chỉnh & BI</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Hỗ trợ 24/7 & Account Manager</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Multi-site & Multi-tenant</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>White-label solution</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>Lưu trữ dữ liệu vĩnh viễn</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>API đầy đủ & SDK</span>
+            </div>
+            <div class="feature-item flex items-center text-left">
+              <i class="fas fa-check text-green-500 mr-3"></i>
+              <span>On-premise deployment</span>
+            </div>
+          </div>
+
+          <button class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all">
+            Liên hệ tư vấn
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Feature Comparison Table -->
+<section class="py-12 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12" data-aos="fade-up">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">
+        So sánh chi tiết các <span class="gradient-text">tính năng</span>
+      </h2>
+      <p class="text-xl text-gray-600">
+        Xem chi tiết những gì bạn nhận được với mỗi gói
+      </p>
+    </div>
+
+    <div class="overflow-x-auto" data-aos="fade-up" data-aos-delay="200">
+      <table class="w-full border-collapse bg-white shadow-lg rounded-lg overflow-hidden">
+        <thead class="bg-gray-50">
+        <tr>
+          <th class="py-4 px-6 text-left font-semibold text-gray-900">Tính năng</th>
+          <th class="py-4 px-6 text-center font-semibold text-gray-900">Cơ bản</th>
+          <th class="py-4 px-6 text-center font-semibold text-indigo-600 bg-indigo-50">Chuyên nghiệp</th>
+          <th class="py-4 px-6 text-center font-semibold text-gray-900">Doanh nghiệp</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">Số điểm tuần tra</td>
+          <td class="py-4 px-6 text-center">50</td>
+          <td class="py-4 px-6 text-center bg-indigo-50 font-semibold text-indigo-600">200</td>
+          <td class="py-4 px-6 text-center">Không giới hạn</td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">Số nhân viên</td>
+          <td class="py-4 px-6 text-center">10</td>
+          <td class="py-4 px-6 text-center bg-indigo-50 font-semibold text-indigo-600">50</td>
+          <td class="py-4 px-6 text-center">Không giới hạn</td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">App mobile</td>
+          <td class="py-4 px-6 text-center"><i class="fas fa-check text-green-500"></i></td>
+          <td class="py-4 px-6 text-center bg-indigo-50"><i class="fas fa-check text-green-500"></i></td>
+          <td class="py-4 px-6 text-center"><i class="fas fa-check text-green-500"></i></td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">Báo cáo real-time</td>
+          <td class="py-4 px-6 text-center"><i class="fas fa-times text-red-500"></i></td>
+          <td class="py-4 px-6 text-center bg-indigo-50"><i class="fas fa-check text-green-500"></i></td>
+          <td class="py-4 px-6 text-center"><i class="fas fa-check text-green-500"></i></td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">API tích hợp</td>
+          <td class="py-4 px-6 text-center"><i class="fas fa-times text-red-500"></i></td>
+          <td class="py-4 px-6 text-center bg-indigo-50">Cơ bản</td>
+          <td class="py-4 px-6 text-center">Đầy đủ</td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">Hỗ trợ</td>
+          <td class="py-4 px-6 text-center">Email</td>
+          <td class="py-4 px-6 text-center bg-indigo-50">Email + Điện thoại</td>
+          <td class="py-4 px-6 text-center">24/7 + AM</td>
+        </tr>
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="py-4 px-6 font-medium text-gray-900">Lưu trữ dữ liệu</td>
+          <td class="py-4 px-6 text-center">6 tháng</td>
+          <td class="py-4 px-6 text-center bg-indigo-50">2 năm</td>
+          <td class="py-4 px-6 text-center">Vĩnh viễn</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-12 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12" data-aos="fade-up">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">
+        Khách hàng nói gì về <span class="gradient-text">QR Patrol</span>
+      </h2>
+      <p class="text-xl text-gray-600">
+        Hơn 1000+ doanh nghiệp đã tin tưởng sử dụng QR Patrol
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="bg-white rounded-xl shadow-lg p-6" data-aos="zoom-in" data-aos-delay="100">
+        <div class="flex items-center mb-4">
+          <div class="flex text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <p class="text-gray-600 mb-4">
+          "QR Patrol đã giúp chúng tôi tiết kiệm 40% thời gian quản lý tuần tra.
+          Hệ thống rất dễ sử dụng và báo cáo chi tiết."
+        </p>
+        <div class="flex items-center">
+          <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+               alt="Avatar" class="w-10 h-10 rounded-full mr-3">
+          <div>
+            <p class="font-semibold text-gray-900">Nguyễn Văn Nam</p>
+            <p class="text-sm text-gray-500">GĐ An ninh - ABC Corp</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-6" data-aos="zoom-in" data-aos-delay="200">
+        <div class="flex items-center mb-4">
+          <div class="flex text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <p class="text-gray-600 mb-4">
+          "Triển khai nhanh chóng, đội ngũ support nhiệt tình.
+          ROI rõ ràng sau 3 tháng sử dụng."
+        </p>
+        <div class="flex items-center">
+          <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face"
+               alt="Avatar" class="w-10 h-10 rounded-full mr-3">
+          <div>
+            <p class="font-semibold text-gray-900">Trần Thị Hoa</p>
+            <p class="text-sm text-gray-500">GĐ Vận hành - XYZ Group</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-6" data-aos="zoom-in" data-aos-delay="300">
+        <div class="flex items-center mb-4">
+          <div class="flex text-yellow-400">
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-star"></i>
+          </div>
+        </div>
+        <p class="text-gray-600 mb-4">
+          "Từ khi dùng QR Patrol, việc quản lý bảo vệ trở nên minh bạch và hiệu quả hơn rất nhiều."
+        </p>
+        <div class="flex items-center">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face"
+               alt="Avatar" class="w-10 h-10 rounded-full mr-3">
+          <div>
+            <p class="font-semibold text-gray-900">Lê Minh Tuấn</p>
+            <p class="text-sm text-gray-500">Trưởng phòng IT - DEF Ltd</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-12 bg-white">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12" data-aos="fade-up">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">
+        Câu hỏi thường gặp về <span class="gradient-text">bảng giá</span>
+      </h2>
+    </div>
+
+    <div class="space-y-4" data-aos="fade-up" data-aos-delay="200">
+      <div class="bg-gray-50 rounded-lg">
+        <button onclick="toggleFAQ(1)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-100 rounded-lg">
+          <span class="font-medium text-gray-900">Có được thay đổi gói trong quá trình sử dụng không?</span>
+          <i id="faq-icon-1" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+        </button>
+        <div id="faq-content-1" class="hidden px-6 pb-4">
+          <p class="text-gray-600">Có, bạn có thể nâng cấp hoặc hạ cấp gói bất cứ lúc nào. Chúng tôi sẽ tính phí theo tỷ lệ thời gian sử dụng.</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 rounded-lg">
+        <button onclick="toggleFAQ(2)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-100 rounded-lg">
+          <span class="font-medium text-gray-900">Có phí setup hay phí ẩn nào khác không?</span>
+          <i id="faq-icon-2" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+        </button>
+        <div id="faq-content-2" class="hidden px-6 pb-4">
+          <p class="text-gray-600">Không có phí setup hay phí ẩn. Giá niêm yết đã bao gồm tất cả các tính năng được mô tả trong gói.</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 rounded-lg">
+        <button onclick="toggleFAQ(3)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-100 rounded-lg">
+          <span class="font-medium text-gray-900">Chính sách hủy và hoàn tiền như thế nào?</span>
+          <i id="faq-icon-3" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+        </button>
+        <div id="faq-content-3" class="hidden px-6 pb-4">
+          <p class="text-gray-600">Bạn có thể hủy bất cứ lúc nào. Chúng tôi hoàn tiền 100% trong 30 ngày đầu nếu không hài lòng.</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 rounded-lg">
+        <button onclick="toggleFAQ(4)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-100 rounded-lg">
+          <span class="font-medium text-gray-900">Có hỗ trợ thanh toán trả góp không?</span>
+          <i id="faq-icon-4" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+        </button>
+        <div id="faq-content-4" class="hidden px-6 pb-4">
+          <p class="text-gray-600">Có, đối với gói Doanh nghiệp, chúng tôi hỗ trợ thanh toán theo quý hoặc theo thỏa thuận riêng.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-12 bg-gradient-to-r from-indigo-600 to-purple-600">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-aos="zoom-in">
+    <h2 class="text-3xl font-bold text-white mb-4">
+      Sẵn sàng bắt đầu với QR Patrol?
+    </h2>
+    <p class="text-xl text-indigo-100 mb-8">
+      Dùng thử miễn phí 30 ngày - Không cần thẻ tín dụng
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="#" class="px-8 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+        Bắt đầu dùng thử miễn phí
+      </a>
+      <a href="#" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-indigo-600 transition-colors">
+        Đặt lịch demo
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <i class="fas fa-qrcode text-white text-xl"></i>
+          </div>
+          <span class="text-xl font-bold">QR Patrol</span>
+        </div>
+        <p class="text-gray-400">
+          Giải pháp quản lý tuần tra thông minh cho doanh nghiệp Việt Nam.
+        </p>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-4">Sản phẩm</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Tính năng</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Bảng giá</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Demo</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-4">Công ty</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Về chúng tôi</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Tuyển dụng</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Liên hệ</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-4">Hỗ trợ</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Trung tâm trợ giúp</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Tài liệu</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Điều khoản</a></li>
+          <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Chính sách</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+      <p class="text-gray-400 text-sm">
+        © 2025 QR Patrol. All rights reserved. | Created by Phucsisme
+      </p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  AOS.init({
+    duration: 1000,
+    once: true
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+
+    function toggleMobileMenu() {
+      const isMenuOpen = !mobileMenu.classList.contains('hidden');
+      mobileMenu.classList.toggle('hidden');
+
+      if (isMenuOpen) {
+        mobileMenuIcon.classList.replace('fa-times', 'fa-bars');
+      } else {
+        mobileMenuIcon.classList.replace('fa-bars', 'fa-times');
+      }
+    }
+
+    if (mobileMenuButton) {
+      mobileMenuButton.addEventListener('click', toggleMobileMenu);
+    }
+  });
+
+  function toggleBilling() {
+    const toggle = document.getElementById('billing-toggle');
+    const dot = toggle.nextElementSibling.querySelector('.dot');
+    const monthlyPrices = document.querySelectorAll('.monthly-price');
+    const yearlyPrices = document.querySelectorAll('.yearly-price');
+    const yearlySavings = document.querySelectorAll('.yearly-savings');
+
+    if (toggle.checked) {
+      dot.style.transform = 'translateX(24px)';
+      monthlyPrices.forEach(price => {
+        price.classList.add('hidden');
+        price.classList.add('price-flip');
+      });
+      yearlyPrices.forEach(price => {
+        price.classList.remove('hidden');
+        price.classList.add('price-flip');
+      });
+      yearlySavings.forEach(saving => saving.classList.remove('hidden'));
+    } else {
+      dot.style.transform = 'translateX(0)';
+      monthlyPrices.forEach(price => {
+        price.classList.remove('hidden');
+        price.classList.add('price-flip');
+      });
+      yearlyPrices.forEach(price => {
+        price.classList.add('hidden');
+        price.classList.add('price-flip');
+      });
+      yearlySavings.forEach(saving => saving.classList.add('hidden'));
+    }
+
+    setTimeout(() => {
+      document.querySelectorAll('.price-flip').forEach(el => {
+        el.classList.remove('price-flip');
+      });
+    }, 600);
+  }
+
+  function toggleFAQ(id) {
+    const content = document.getElementById(`faq-content-${id}`);
+    const icon = document.getElementById(`faq-icon-${id}`);
+
+    if (content && icon) {
+      content.classList.toggle('hidden');
+      icon.classList.toggle('rotate-180');
+    }
+  }
+
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+</script>
+</body>
+</html>

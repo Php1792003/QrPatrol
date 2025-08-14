@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên hệ - QR Patrol System</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Gradient animation */
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .gradient-text {
+            background: linear-gradient(-45deg, #6366F1, #818CF8, #60A5FA, #6366F1);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 5s ease infinite;
+        }
+
+        /* Pattern background */
+        .pattern-bg {
+            background-color: #f9fafb;
+            background-image:
+                    radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(129, 140, 248, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 40%, rgba(96, 165, 250, 0.05) 0%, transparent 50%);
+        }
+
+        /* Map container */
+        .map-container {
+            position: relative;
+            overflow: hidden;
+            padding-top: 56.25%;
+        }
+
+        .map-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Floating animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-animation {
+            animation: float 4s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<nav class="fixed top-0 w-full bg-white/90 backdrop-blur-lg shadow-sm z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-3">
+                <a th:href="@{/}" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-qrcode text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">QR Patrol</span>
+                </a>
+            </div>
+
+            <div class="hidden md:flex items-center space-x-8">
+                <a th:href="@{/}" class="text-gray-600 hover:text-indigo-600 transition-colors">Trang chủ</a>
+                <a th:href="@{/about}" class="text-gray-600 hover:text-indigo-600 transition-colors">Giới thiệu</a>
+                <a th:href="@{/violation-search}" class="text-gray-600 hover:text-indigo-600 transition-colors">Tra cứu</a>
+                <a th:href="@{/pricing}" class="text-gray-600 hover:text-indigo-600 transition-colors">Bảng giá</a>
+                <a th:href="@{/contact}" class="text-indigo-600 font-medium">Liên hệ</a>
+            </div>
+
+            <div class="hidden md:flex items-center space-x-4">
+                <a th:href="@{/login}" class="text-indigo-600 font-medium hover:text-indigo-700">Đăng nhập</a>
+                <a th:href="@{/login}" class="hidden sm:block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Dùng thử
+                </a>
+            </div>
+
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" class="p-2">
+                    <i id="mobile-menu-icon" class="fas fa-bars text-gray-600 text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div id="mobile-menu" class="hidden fixed inset-0 bg-white z-40 pt-20 overflow-y-auto">
+        <div class="px-4 pt-2 pb-4 space-y-2">
+            <a th:href="@{/}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Trang chủ</a>
+            <a th:href="@{/about}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Giới thiệu</a>
+            <a th:href="@{/violation-search}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Tra cứu</a>
+            <a th:href="@{/pricing}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Bảng giá</a>
+            <a th:href="@{/contact}" class="block py-2 px-2 text-indigo-600 bg-indigo-50 rounded">Liên hệ</a>
+            <div class="pt-4 mt-4 border-t space-y-3">
+                <a th:href="@{/login}" class="block w-full text-center py-2 px-4 border border-indigo-600 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50">Đăng nhập</a>
+                <a th:href="@{/login}" class="block w-full text-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700">Dùng thử</a>
+            </div>
+        </div>
+    </div>
+
+<section class="pt-24 pb-12 pattern-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center" data-aos="fade-down">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Liên hệ với <span class="gradient-text">QR Patrol</span>
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy liên hệ để được tư vấn miễn phí!
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Information Cards -->
+<section class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Phone Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow" data-aos="zoom-in" data-aos-delay="100">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-phone-alt text-indigo-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Hotline</h3>
+                <p class="text-2xl font-bold text-indigo-600 mb-1">0905 441 263</p>
+                <p class="text-gray-600">0905 398 263</p>
+                <p class="text-sm text-gray-500 mt-2">Thứ 2 - Thứ 6: 8:00 - 18:00</p>
+            </div>
+
+            <!-- Email Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow" data-aos="zoom-in" data-aos-delay="200">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-envelope text-purple-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Email</h3>
+                <p class="text-lg font-medium text-purple-600 mb-1">support@qrpatrol.vn</p>
+                <p class="text-gray-600">sales@qrpatrol.vn</p>
+                <p class="text-sm text-gray-500 mt-2">Phản hồi trong 24h</p>
+            </div>
+
+            <!-- Address Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow" data-aos="zoom-in" data-aos-delay="300">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-map-marker-alt text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Văn phòng</h3>
+                <p class="text-gray-600">36 Cẩm Bắc 11<br>Phường Cẩm Lệ<br>TP.Đà Nẵng</p>
+                <a href="#map" class="text-sm text-green-600 hover:text-green-700 mt-2 inline-block">
+                    <i class="fas fa-directions mr-1"></i> Xem bản đồ
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Contact Section -->
+<section class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Contact Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-8" data-aos="fade-right">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                    <i class="fas fa-paper-plane text-indigo-600 mr-2"></i>
+                    Gửi tin nhắn cho chúng tôi
+                </h2>
+
+                <form th:action="@{/contact}" th:object="${contactDto}" method="post" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Họ và tên <span class="text-red-500">*</span></label>
+                            <input type="text" id="name" th:field="*{name}" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="Nguyễn Văn A">
+                            <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="text-red-500 text-sm mt-1"></p>
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại <span class="text-red-500">*</span></label>
+                            <input type="tel" id="phone" th:field="*{phone}" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="0901234567">
+                            <p th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="text-red-500 text-sm mt-1"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" th:field="*{email}" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="email@company.com">
+                        <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-red-500 text-sm mt-1"></p>
+                    </div>
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 mb-2">Công ty</label>
+                        <input type="text" id="company" th:field="*{company}" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="Tên công ty của bạn">
+                    </div>
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Chủ đề <span class="text-red-500">*</span></label>
+                        <select id="subject" th:field="*{subject}" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                            <option value="">Chọn chủ đề...</option>
+                            <option value="sales">Tư vấn mua hàng</option>
+                            <option value="support">Hỗ trợ kỹ thuật</option>
+                            <option value="partnership">Hợp tác đối tác</option>
+                            <option value="demo">Yêu cầu demo</option>
+                            <option value="other">Khác</option>
+                        </select>
+                        <p th:if="${#fields.hasErrors('subject')}" th:errors="*{subject}" class="text-red-500 text-sm mt-1"></p>
+                    </div>
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Nội dung tin nhắn <span class="text-red-500">*</span></label>
+                        <textarea id="message" th:field="*{message}" rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none" placeholder="Cho chúng tôi biết bạn cần hỗ trợ gì..."></textarea>
+                        <p th:if="${#fields.hasErrors('message')}" th:errors="*{message}" class="text-red-500 text-sm mt-1"></p>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="newsletter" th:field="*{newsletter}" class="w-4 h-4 text-indigo-600 border-gray-300 rounded">
+                        <label for="newsletter" class="ml-2 text-sm text-gray-600">Tôi muốn nhận thông tin và ưu đãi mới nhất từ QR Patrol</label>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-[1.02]"><i class="fas fa-paper-plane mr-2"></i> Gửi tin nhắn</button>
+                </form>
+            </div>
+            <div data-aos="fade-left">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6"><i class="fas fa-question-circle text-indigo-600 mr-2"></i> Câu hỏi thường gặp</h2>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden"><button onclick="toggleFAQ(1)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50"><span class="font-medium text-gray-900">Chi phí triển khai hệ thống QR Patrol là bao nhiêu?</span><i id="faq-icon-1" class="fas fa-chevron-down text-gray-400"></i></button><div id="faq-content-1" class="hidden px-6 pb-4"><p class="text-gray-600">Chi phí triển khai phụ thuộc vào quy mô và nhu cầu cụ thể của doanh nghiệp...</p></div></div>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden"><button onclick="toggleFAQ(2)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50"><span class="font-medium text-gray-900">Thời gian triển khai mất bao lâu?</span><i id="faq-icon-2" class="fas fa-chevron-down text-gray-400"></i></button><div id="faq-content-2" class="hidden px-6 pb-4"><p class="text-gray-600">Thông thường, việc triển khai cơ bản chỉ mất 24-48 giờ...</p></div></div>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden"><button onclick="toggleFAQ(3)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50"><span class="font-medium text-gray-900">Có được dùng thử trước khi mua không?</span><i id="faq-icon-3" class="fas fa-chevron-down text-gray-400"></i></button><div id="faq-content-3" class="hidden px-6 pb-4"><p class="text-gray-600">Có, chúng tôi cung cấp 30 ngày dùng thử miễn phí...</p></div></div>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden"><button onclick="toggleFAQ(4)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50"><span class="font-medium text-gray-900">Hệ thống có hoạt động offline không?</span><i id="faq-icon-4" class="fas fa-chevron-down text-gray-400"></i></button><div id="faq-content-4" class="hidden px-6 pb-4"><p class="text-gray-600">Có, ứng dụng mobile của QR Patrol hỗ trợ hoạt động offline...</p></div></div>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden"><button onclick="toggleFAQ(5)" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50"><span class="font-medium text-gray-900">Có hỗ trợ đào tạo nhân viên không?</span><i id="faq-icon-5" class="fas fa-chevron-down text-gray-400"></i></button><div id="faq-content-5" class="hidden px-6 pb-4"><p class="text-gray-600">Có, chúng tôi cung cấp đào tạo miễn phí...</p></div></div>
+                </div>
+                <div class="mt-8 p-6 bg-indigo-50 rounded-xl"><h3 class="font-semibold text-indigo-900 mb-2"><i class="fas fa-headset mr-2"></i> Cần hỗ trợ thêm?</h3><p class="text-indigo-700 mb-4">Đội ngũ tư vấn của chúng tôi luôn sẵn sàng giải đáp mọi thắc mắc của bạn.</p><a href="tel:0905441263" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"><i class="fas fa-phone mr-2"></i> Gọi ngay 0905441263</a></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="map" class="py-12 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8" data-aos="fade-up">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                Ghé thăm <span class="gradient-text">văn phòng</span> của chúng tôi
+            </h2>
+            <p class="text-gray-600">
+                Chúng tôi luôn chào đón bạn đến tham quan và tìm hiểu trực tiếp về sản phẩm
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Office Info -->
+            <div class="lg:col-span-1 flex flex-col justify-center" data-aos="fade-right">
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-building text-indigo-600 mr-2"></i>
+                        Văn phòng TP.Đà Nẵng
+                    </h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt text-indigo-600 mt-1 mr-3 w-4"></i>
+                            <span>36 Cẩm Bắc 11, Phường Cẩm Lệ, TP.Đà Nẵng</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-clock text-indigo-600 mr-3 w-4"></i>
+                            <span>Thứ 2 - Thứ 6: 8:00 - 18:00</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone text-indigo-600 mr-3 w-4"></i>
+                            <span>0905 441 253</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope text-indigo-600 mr-3 w-4"></i>
+                            <span>contact@qrpatrol.vn</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="lg:col-span-2" data-aos="fade-left">
+                <div class="map-container rounded-xl overflow-hidden shadow-xl">
+                    <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3834.9424729116618!2d108.19484887587772!3d16.01650988465529!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31421a29419e5fc9%3A0x83bc078ec7682ad6!2zMzYgQ-G6qW0gQuG6r2MgMTEsIEjDsmEgVGjhu40gxJDDtG5nLCBD4bqpbSBM4buHLCDEkMOgIE7hurVuZyA1NTAwMDAsIFZp4buHdCBOYW0!5e0!3m2!1svi!2s!4v1755101303726!5m2!1svi!2s"
+                            allowfullscreen=""
+                            loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Social Media Section -->
+<section class="py-12 bg-gradient-to-r from-indigo-600 to-purple-600">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-aos="zoom-in">
+        <h2 class="text-3xl font-bold text-white mb-4">
+            Kết nối với chúng tôi
+        </h2>
+        <p class="text-indigo-100 mb-8">
+            Theo dõi QR Patrol trên mạng xã hội để nhận tin tức và ưu đãi mới nhất
+        </p>
+        <div class="flex justify-center space-x-6">
+            <a href="#" class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                <i class="fab fa-facebook-f text-white text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                <i class="fab fa-youtube text-white text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                <i class="fab fa-linkedin-in text-white text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                <i class="fab fa-twitter text-white text-xl"></i>
+            </a>
+            <a href="#" class="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                <i class="fab fa-instagram text-white text-xl"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-qrcode text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold">QR Patrol</span>
+                </div>
+                <p class="text-gray-400">
+                    Giải pháp quản lý tuần tra thông minh cho doanh nghiệp Việt Nam.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-semibold mb-4">Sản phẩm</h4>
+                <ul class="space-y-2">
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Tính năng</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Bảng giá</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Demo</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">API</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-semibold mb-4">Công ty</h4>
+                <ul class="space-y-2">
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Về chúng tôi</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Tuyển dụng</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Liên hệ</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="font-semibold mb-4">Hỗ trợ</h4>
+                <ul class="space-y-2">
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Trung tâm trợ giúp</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Tài liệu</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Điều khoản</a></li>
+                    <li><a th:href="@{/}" class="text-gray-400 hover:text-white transition-colors">Chính sách</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-400 text-sm">
+                © 2025 QR Patrol. All rights reserved. | Made by Phucsisme
+            </p>
+        </div>
+    </div>
+</footer>
+
+
+<script>
+    AOS.init({
+        duration: 1000,
+        once: true
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+
+        function toggleMobileMenu() {
+            const isMenuOpen = !mobileMenu.classList.contains('hidden');
+
+            mobileMenu.classList.toggle('hidden');
+
+            // Đổi icon
+            if (isMenuOpen) {
+                mobileMenuIcon.classList.replace('fa-times', 'fa-bars');
+            } else {
+                mobileMenuIcon.classList.replace('fa-bars', 'fa-times');
+            }
+        }
+
+        if (mobileMenuButton) {
+            mobileMenuButton.addEventListener('click', toggleMobileMenu);
+        }
+
+    });
+
+    function toggleFAQ(id) {
+        const content = document.getElementById(`faq-content-${id}`);
+        const icon = document.getElementById(`faq-icon-${id}`);
+        if(content && icon) {
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+    }
+</script>
+</body>
+</html>

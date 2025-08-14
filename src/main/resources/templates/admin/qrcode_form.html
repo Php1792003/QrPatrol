@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title=${pageTitle}, content=~{::content}, currentPage='admin_qrcodes')}">
+
+<th:block th:fragment="content">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6" th:text="${pageTitle}"></h1>
+        <div class="bg-white p-8 rounded-xl shadow-sm border">
+            <form th:action="@{/admin/qrcodes/save}" th:object="${qrcode}" method="post" class="space-y-6">
+                <input type="hidden" th:field="*{idCode}"/><input type="hidden" th:field="*{createdAt}"/><input type="hidden" th:field="*{createdBy}"/>
+                <div>
+                    <label for="locationName" class="block text-sm font-medium text-gray-700">Tên vị trí</label>
+                    <input type="text" id="locationName" th:field="*{locationName}" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Mô tả</label>
+                    <textarea id="description" th:field="*{description}" rows="4" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"></textarea>
+                </div>
+                <div class="flex justify-end items-center space-x-4 pt-4 border-t">
+                    <a th:href="@{/admin/qrcodes}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Hủy</a>
+                    <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
+</html>

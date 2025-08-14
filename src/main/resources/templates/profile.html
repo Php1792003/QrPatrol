@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title='Hồ sơ cá nhân', content=~{::content}, currentPage='profile')}">
+
+<th:block th:fragment="content">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Hồ sơ cá nhân</h1>
+      <p class="text-gray-600 mt-2">Quản lý thông tin tài khoản và bảo mật của bạn.</p>
+    </div>
+  </div>
+
+  <div th:if="${successMessage}" class="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-r-lg" role="alert" th:text="${successMessage}"></div>
+  <div th:if="${errorMessage}" class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert" th:text="${errorMessage}"></div>
+  <div th:if="${passwordError}" class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert" th:text="${passwordError}"></div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form th:action="@{/profile/update-info}" method="post" enctype="multipart/form-data" class="space-y-6">
+          <div class="text-center">
+            <img th:src="${user.avatar != null ? '/user-avatars/' + user.avatar : '/img/undraw_profile.svg'}"
+                 class="w-32 h-32 rounded-full mx-auto ring-4 ring-primary-200 object-cover" alt="Avatar">
+          </div>
+          <div>
+            <label for="avatarFile" class="block text-sm font-medium text-gray-700">Thay đổi ảnh đại diện</label>
+            <input type="file" id="avatarFile" name="avatarFile" accept="image/*"
+                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+          </div>
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700">Tên đăng nhập</label>
+            <input type="text" id="username" th:value="${user.username}" readonly
+                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
+          </div>
+          <div>
+            <label for="fullName" class="block text-sm font-medium text-gray-700">Họ và tên</label>
+            <input type="text" id="fullName" name="fullName" th:value="${user.fullName}" required
+                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <button type="submit" class="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+            Lưu thông tin
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-4 mb-6">Đổi mật khẩu</h3>
+        <form th:action="@{/profile/change-password}" method="post" class="space-y-6">
+          <div>
+            <label for="oldPassword" class="block text-sm font-medium text-gray-700">Mật khẩu cũ</label>
+            <input type="password" id="oldPassword" name="oldPassword" required placeholder="Nhập mật khẩu hiện tại"
+                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label for="newPassword" class="block text-sm font-medium text-gray-700">Mật khẩu mới</label>
+            <input type="password" id="newPassword" name="newPassword" required placeholder="Nhập mật khẩu mới"
+                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700">Xác nhận mật khẩu mới</label>
+            <input type="password" id="confirmNewPassword" name="confirmNewPassword" required placeholder="Nhập lại mật khẩu mới"
+                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div class="flex justify-end">
+            <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+              Đổi mật khẩu
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</th:block>
+</html>

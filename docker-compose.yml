@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # Dịch vụ ứng dụng Spring Boot
+  app:
+    build: .
+    container_name: qr-patrol-app
+    ports:
+      - "8081:8081"
+    depends_on:
+      - sqlserver-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://sqlserver-db:1433;databaseName=qr_patrol;encrypt=false;trustServerCertificate=true;characterEncoding=UTF-8
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=Phphcm179
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - ACCEPT_EULA=Y
+      - MSSQL_DB=qr_patrol
+      - MSSQL_COLLATION=Vietnamese_CI_AS
+
+  # Dịch vụ CSDL SQL Server
+  sqlserver-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: qr-patrol-db
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Phphcm179 # Mật khẩu phải khớp ở trên
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+volumes:
+  sqlserver_data:

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title=${pageTitle}, content=~{::content}, currentPage='admin_violations')}">
+
+<th:block th:fragment="content">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6" th:text="${pageTitle}"></h1>
+        <div class="bg-white p-8 rounded-xl shadow-sm border">
+            <form th:action="@{/admin/violations/save}" th:object="${violation}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:field="*{id}"/><input type="hidden" th:field="*{violationDate}"/><input type="hidden" th:field="*{status}"/><input type="hidden" th:field="*{createdBy}"/>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div>
+                        <label for="licensePlate" class="block text-sm font-medium text-gray-700">Biển số xe</label>
+                        <input type="text" id="licensePlate" th:field="*{licensePlate}" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div>
+                        <label for="apartmentCode" class="block text-sm font-medium text-gray-700">Mã căn hộ</label>
+                        <input type="text" id="apartmentCode" th:field="*{apartmentCode}" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="imageFile" class="block text-sm font-medium text-gray-700">Ảnh bằng chứng</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*" th:required="${violation.id == null}" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+                        <div th:if="${violation.id != null && violation.evidenceImage != null}" class="mt-4"><p class="text-sm font-medium text-gray-700">Ảnh hiện tại:</p><img th:src="@{'/violation-images/' + ${violation.evidenceImage}}" alt="Evidence" class="mt-2 h-32 rounded-lg border"></div>
+                    </div>
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-gray-700">Ghi chú</label>
+                        <textarea id="notes" th:field="*{notes}" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="sanctionDetails" class="block text-sm font-medium text-gray-700">Chi tiết chế tài</label>
+                        <input type="text" id="sanctionDetails" th:field="*{sanctionDetails}" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Chỉ điền khi ở mức Chế tài">
+                    </div>
+                </div>
+                <div class="flex justify-end items-center space-x-4 pt-8 mt-6 border-t">
+                    <a th:href="@{/admin/violations}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Hủy</a>
+                    <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
+</html>

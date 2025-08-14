@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quét Mã Tuần Tra - QR Patrol</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome -->
+    <link th:href="@{/vendor/fontawesome-free/css/all.min.css}" rel="stylesheet" type="text/css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'inter': ['Inter', 'sans-serif'], },
+                    colors: {
+                        primary: { 500: '#6366F1', 600: '#4F46E5' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        #qr-reader {
+            width: 100%;
+            border-radius: 1rem; /* rounded-xl */
+            overflow: hidden;
+            border: 2px solid #e5e7eb; /* border-gray-200 */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+<div class="w-full max-w-lg mx-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200">
+        <div class="p-6 sm:p-8">
+            <div class="text-center mb-6">
+                <i class="fas fa-qrcode text-3xl text-primary-600 mb-2"></i>
+                <h1 class="text-2xl font-bold text-gray-900">Quét Mã Tuần Tra</h1>
+                <p class="text-sm text-gray-500 mt-1">Nhân viên:
+                    <strong class="text-gray-700" sec:authentication="principal.fullName">Scanner Name</strong>
+                </p>
+            </div>
+
+            <div id="qr-reader" class="mb-4"></div>
+
+            <div id="result-container" class="text-center">
+                <div id="scan-result" class="px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300">
+                </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                <a th:href="@{/dashboard}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-arrow-left fa-sm mr-2"></i> Về trang Tổng quan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script th:inline="javascript">
+    const csrfToken = /*[[${_csrf.token}]]*/ null;
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ null;
+    const resultDiv = document.getElementById('scan-result');
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    let isScanning = false;
+    let cooldownInterval;
+
+    const updateResult = (status, message) => {
+        let bgColor, textColor, borderColor, icon;
+        switch (status) {
+            case 'success':
+                bgColor = 'bg-green-100'; textColor = 'text-green-800'; borderColor = 'border-green-200'; icon = 'fas fa-check-circle';
+                break;
+            case 'error':
+                bgColor = 'bg-red-100'; textColor = 'text-red-800'; borderColor = 'border-red-200'; icon = 'fas fa-times-circle';
+                break;
+            case 'warning':
+                bgColor = 'bg-yellow-100'; textColor = 'text-yellow-800'; borderColor = 'border-yellow-200'; icon = 'fas fa-spinner fa-spin';
+                break;
+            default: // secondary / info
+                bgColor = 'bg-gray-100'; textColor = 'text-gray-800'; borderColor = 'border-gray-200'; icon = 'fas fa-camera';
+                break;
+        }
+        resultDiv.className = `px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 border ${bgColor} ${textColor} ${borderColor}`;
+        resultDiv.innerHTML = `<i class="${icon} mr-2"></i> ${message}`;
+    };
+
+    const startCooldown = () => {
+        let secondsLeft = 8;
+        isScanning = false;
+        clearInterval(cooldownInterval);
+
+        cooldownInterval = setInterval(() => {
+            if (secondsLeft > 0) {
+                updateResult('warning', `Sẵn sàng quét lại sau <strong>${secondsLeft}</strong> giây...`);
+                secondsLeft--;
+            } else {
+                clearInterval(cooldownInterval);
+                startScanning();
+            }
+        }, 1000);
+    };
+
+    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        if (!isScanning) return;
+        isScanning = false;
+        html5QrCode.pause();
+
+        if (navigator.vibrate) navigator.vibrate(100);
+        updateResult('warning', 'Đang xử lý...');
+
+        fetch('/api/scanner/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+            body: JSON.stringify({ qrCodeId: decodedText })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateResult('success', `<strong>Thành công!</strong> Vị trí: ${data.location}`);
+                } else {
+                    updateResult('error', `<strong>Lỗi:</strong> ${data.message}`);
+                }
+            })
+            .catch(error => {
+                updateResult('error', '<strong>Lỗi:</strong> Không thể kết nối tới máy chủ.');
+            })
+            .finally(() => {
+                startCooldown();
+            });
+    };
+
+    const qrboxFunction = (w, h) => ({ width: Math.floor(Math.min(w, h) * 0.7), height: Math.floor(Math.min(w, h) * 0.7) });
+
+    function startScanning() {
+        if (isScanning) return;
+        updateResult('info', 'Hướng camera vào mã QR...');
+        isScanning = true;
+
+        if (html5QrCode.getState() === Html5QrcodeScannerState.PAUSED) {
+            html5QrCode.resume();
+        } else {
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: qrboxFunction },
+                qrCodeSuccessCallback,
+                () => {}
+            ).catch(err => {
+                isScanning = false;
+                updateResult('error', '<strong>Lỗi Camera:</strong> Vui lòng cấp quyền và tải lại trang.');
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateResult('info', `<span class="animate-pulse">Đang khởi động camera...</span>`);
+        startScanning();
+    });
+</script>
+
+</body>
+</html>
