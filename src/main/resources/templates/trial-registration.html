@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký dùng thử miễn phí - QR Patrol System</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Gradient animation */
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .gradient-text {
+            background: linear-gradient(-45deg, #6366F1, #818CF8, #60A5FA, #6366F1);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 5s ease infinite;
+        }
+
+        /* Pattern background */
+        .pattern-bg {
+            background-color: #f9fafb;
+            background-image:
+                    radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(129, 140, 248, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 40%, rgba(96, 165, 250, 0.05) 0%, transparent 50%);
+        }
+
+        /* Form animations */
+        .form-step {
+            transition: all 0.3s ease;
+        }
+
+        .form-step.hidden {
+            opacity: 0;
+            transform: translateX(50px);
+            pointer-events: none;
+        }
+
+        /* Success animation */
+        @keyframes checkmark {
+            0% { stroke-dashoffset: 100; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .checkmark {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: checkmark 1s ease-in-out forwards;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+
+        /* Floating elements */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Pulse effect */
+        .pulse-effect {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Navigation -->
+<nav class="fixed top-0 w-full bg-white/90 backdrop-blur-lg shadow-sm z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex items-center space-x-3">
+                <a th:href="@{/}" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-qrcode text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">QR Patrol</span>
+                </a>
+            </div>
+
+            <div class="hidden md:flex items-center space-x-8">
+                <a th:href="@{/}" class="text-gray-600 hover:text-indigo-600 transition-colors">Trang chủ</a>
+                <a th:href="@{/features}" class="text-gray-600 hover:text-indigo-600 transition-colors">Tính năng</a>
+                <a th:href="@{/pricing}" class="text-gray-600 hover:text-indigo-600 transition-colors">Bảng giá</a>
+                <a th:href="@{/about}" class="text-gray-600 hover:text-indigo-600 transition-colors">Về chúng tôi</a>
+                <a th:href="@{/contact}" class="text-gray-600 hover:text-indigo-600 transition-colors">Liên hệ</a>
+            </div>
+
+            <div class="hidden md:flex items-center space-x-4">
+                <a th:href="@{/login}" class="text-indigo-600 font-medium hover:text-indigo-700">Đăng nhập</a>
+                <span class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold">
+                    Đăng ký dùng thử
+                </span>
+            </div>
+
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" class="p-2">
+                    <i id="mobile-menu-icon" class="fas fa-bars text-gray-600 text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div class="px-4 pt-2 pb-4 space-y-2">
+            <a th:href="@{/}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Trang chủ</a>
+            <a th:href="@{/features}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Tính năng</a>
+            <a th:href="@{/pricing}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Bảng giá</a>
+            <a th:href="@{/about}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Về chúng tôi</a>
+            <a th:href="@{/contact}" class="block py-2 px-2 text-gray-600 hover:bg-gray-100 rounded">Liên hệ</a>
+            <div class="pt-4 mt-4 border-t space-y-3">
+                <a th:href="@{/login}" class="block w-full text-center py-2 px-4 border border-indigo-600 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50">Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="pt-24 pb-12 pattern-bg min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Back Button -->
+        <div class="mb-6" data-aos="fade-right">
+            <a th:href="@{/}" class="inline-flex items-center px-4 py-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Trở về trang chủ
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+            <!-- Left Side - Benefits -->
+            <div class="space-y-8" data-aos="fade-right">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                        Dùng thử <span class="gradient-text">miễn phí</span> 30 ngày
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8">
+                        Trải nghiệm đầy đủ tính năng QR Patrol ngay hôm nay.
+                        Không cần thẻ tín dụng, không ràng buộc.
+                    </p>
+
+                    <!-- Benefits List -->
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-check text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Truy cập đầy đủ tính năng</h3>
+                                <p class="text-gray-600">Sử dụng 100% chức năng của QR Patrol trong 30 ngày</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-users text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Hỗ trợ 10 nhân viên</h3>
+                                <p class="text-gray-600">Đủ để thử nghiệm với team nhỏ hoặc 1 khu vực</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-headset text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Hỗ trợ ưu tiên</h3>
+                                <p class="text-gray-600">Chat trực tiếp với team support trong giờ hành chính</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-mobile-alt text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">App mobile miễn phí</h3>
+                                <p class="text-gray-600">Download ngay trên iOS và Android</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trust Indicators -->
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <h4 class="font-semibold text-gray-900 mb-4">Được tin tưởng bởi 300+ doanh nghiệp</h4>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-2xl font-bold text-indigo-600">15+</div>
+                            <div class="text-sm text-gray-600">Năm kinh nghiệm</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-indigo-600">1000+</div>
+                            <div class="text-sm text-gray-600">Nhân viên bảo vệ</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-indigo-600">99.9%</div>
+                            <div class="text-sm text-gray-600">Uptime</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-indigo-600">24/7</div>
+                            <div class="text-sm text-gray-600">Hỗ trợ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Registration Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-8" data-aos="fade-left">
+
+                <!-- Progress Bar -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                        <span>Bước <span id="current-step">1</span> / 3</span>
+                        <span id="step-title">Thông tin cơ bản</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="progress-bar bg-indigo-600 h-2 rounded-full" style="width: 33%"></div>
+                    </div>
+                </div>
+
+                <form id="trialForm" th:action="@{/trial-registration}" method="post">
+                    <!-- Step 1: Basic Information -->
+                    <div id="step-1" class="form-step">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                            <i class="fas fa-user text-indigo-600 mr-2"></i>
+                            Thông tin liên hệ
+                        </h2>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="fullName" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Họ và tên <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text"
+                                       id="fullName"
+                                       name="fullName"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Nguyễn Văn A"
+                                       required>
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Email <span class="text-red-500">*</span>
+                                </label>
+                                <input type="email"
+                                       id="email"
+                                       name="email"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="email@company.com"
+                                       required>
+                            </div>
+
+                            <div>
+                                <label for="phone" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Số điện thoại <span class="text-red-500">*</span>
+                                </label>
+                                <input type="tel"
+                                       id="phone"
+                                       name="phone"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="0901234567"
+                                       required>
+                            </div>
+                        </div>
+
+                        <button type="button"
+                                onclick="nextStep(1)"
+                                class="w-full mt-6 py-3 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                            Tiếp tục
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Company Information -->
+                    <div id="step-2" class="form-step hidden">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                            <i class="fas fa-building text-indigo-600 mr-2"></i>
+                            Thông tin công ty
+                        </h2>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="companyName" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Tên công ty <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text"
+                                       id="companyName"
+                                       name="companyName"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="Công ty TNHH ABC"
+                                       required>
+                            </div>
+
+                            <div>
+                                <label for="companySize" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Quy mô công ty <span class="text-red-500">*</span>
+                                </label>
+                                <select id="companySize"
+                                        name="companySize"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                        required>
+                                    <option value="">Chọn quy mô...</option>
+                                    <option value="1-10">1-10 nhân viên</option>
+                                    <option value="11-50">11-50 nhân viên</option>
+                                    <option value="51-200">51-200 nhân viên</option>
+                                    <option value="201-500">201-500 nhân viên</option>
+                                    <option value="500+">Trên 500 nhân viên</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="industry" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Lĩnh vực hoạt động
+                                </label>
+                                <select id="industry"
+                                        name="industry"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Chọn lĩnh vực...</option>
+                                    <option value="manufacturing">Sản xuất</option>
+                                    <option value="retail">Bán lẻ</option>
+                                    <option value="realestate">Bất động sản</option>
+                                    <option value="hospitality">Khách sạn - Nhà hàng</option>
+                                    <option value="education">Giáo dục</option>
+                                    <option value="healthcare">Y tế</option>
+                                    <option value="technology">Công nghệ</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4 mt-6">
+                            <button type="button"
+                                    onclick="prevStep(2)"
+                                    class="flex-1 py-3 px-6 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Quay lại
+                            </button>
+                            <button type="button"
+                                    onclick="nextStep(2)"
+                                    class="flex-1 py-3 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                Tiếp tục
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Trial Requirements -->
+                    <div id="step-3" class="form-step hidden">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                            <i class="fas fa-cogs text-indigo-600 mr-2"></i>
+                            Yêu cầu dùng thử
+                        </h2>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="expectedUsers" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Số lượng nhân viên bảo vệ dự kiến <span class="text-red-500">*</span>
+                                </label>
+                                <select id="expectedUsers"
+                                        name="expectedUsers"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                        required>
+                                    <option value="">Chọn số lượng...</option>
+                                    <option value="1-5">1-5 người</option>
+                                    <option value="6-10">6-10 người</option>
+                                    <option value="11-20">11-20 người</option>
+                                    <option value="21-50">21-50 người</option>
+                                    <option value="50+">Trên 50 người</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="useCase" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Mục đích sử dụng
+                                </label>
+                                <textarea id="useCase"
+                                          name="useCase"
+                                          rows="3"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                                          placeholder="Ví dụ: Quản lý bảo vệ tại 2 tòa nhà văn phòng, theo dõi tuần tra 24/7..."></textarea>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox"
+                                       id="agreeTerms"
+                                       name="agreeTerms"
+                                       class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                       required>
+                                <label for="agreeTerms" class="ml-2 text-sm text-gray-600">
+                                    Tôi đồng ý với
+                                    <a href="#" class="text-indigo-600 hover:text-indigo-500">Điều khoản sử dụng</a>
+                                    và
+                                    <a href="#" class="text-indigo-600 hover:text-indigo-500">Chính sách bảo mật</a>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4 mt-6">
+                            <button type="button"
+                                    onclick="prevStep(3)"
+                                    class="flex-1 py-3 px-6 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Quay lại
+                            </button>
+                            <button type="submit"
+                                    id="submitBtn"
+                                    class="flex-1 py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span class="submit-text">
+                                    <i class="fas fa-rocket mr-2"></i>
+                                    Đăng ký ngay
+                                </span>
+                                <span class="loading-text hidden">
+                                    <div class="loading-spinner inline-block mr-2"></div>
+                                    Đang xử lý...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Success Message -->
+                <div id="success-message" class="hidden text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path class="checkmark" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Đăng ký thành công!</h2>
+                    <p class="text-gray-600 mb-6">
+                        Thông tin tài khoản dùng thử đã được gửi về Email của bạn.
+                        Vui lòng kiểm tra tin nhắn để nhận thông tin đăng nhập.
+                    </p>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <h4 class="font-semibold text-blue-900 mb-2">Thông tin tài khoản:</h4>
+                        <div class="text-sm text-blue-700 space-y-1">
+                            <div><strong>Username:</strong> <span id="generated-username"></span></div>
+                            <div><strong>Password:</strong> <span id="generated-password"></span></div>
+                            <div><strong>Thời gian dùng thử:</strong> 30 ngày</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <a th:href="@{/login}"
+                           class="block w-full py-3 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors text-center">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Đăng nhập ngay
+                        </a>
+                        <a th:href="@{/}"
+                           class="block w-full py-3 px-6 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            Về trang chủ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300">
+    <div class="bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+        <div class="flex items-center">
+            <div id="toast-icon" class="flex-shrink-0 mr-3"></div>
+            <div>
+                <div id="toast-title" class="font-semibold text-gray-900"></div>
+                <div id="toast-message" class="text-sm text-gray-600"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    AOS.init({
+        duration: 1000,
+        once: true
+    });
+
+    // Mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+
+        function toggleMobileMenu() {
+            const isMenuOpen = !mobileMenu.classList.contains('hidden');
+            mobileMenu.classList.toggle('hidden');
+
+            if (isMenuOpen) {
+                mobileMenuIcon.classList.replace('fa-times', 'fa-bars');
+            } else {
+                mobileMenuIcon.classList.replace('fa-bars', 'fa-times');
+            }
+        }
+
+        if (mobileMenuButton) {
+            mobileMenuButton.addEventListener('click', toggleMobileMenu);
+        }
+
+        const phoneInput = document.getElementById('phone');
+        const zaloPhoneInput = document.getElementById('zaloPhone');
+
+        phoneInput.addEventListener('blur', function() {
+            if (this.value && !zaloPhoneInput.value) {
+                zaloPhoneInput.value = this.value;
+            }
+        });
+    });
+
+    // Multi-step form logic
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    function updateProgress() {
+        const progress = (currentStep / totalSteps) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
+        document.getElementById('current-step').textContent = currentStep;
+
+        const stepTitles = ['Thông tin cơ bản', 'Thông tin công ty', 'Yêu cầu dùng thử'];
+        document.getElementById('step-title').textContent = stepTitles[currentStep - 1];
+    }
+
+    function validateStep(step) {
+        const stepElement = document.getElementById(`step-${step}`);
+        const requiredFields = stepElement.querySelectorAll('[required]');
+
+        for (let field of requiredFields) {
+            if (!field.value.trim()) {
+                field.focus();
+                showToast('error', 'Thiếu thông tin', 'Vui lòng điền đầy đủ các trường bắt buộc');
+                return false;
+            }
+        }
+
+        // Additional validation for email
+        if (step === 1) {
+            const email = document.getElementById('email').value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                document.getElementById('email').focus();
+                showToast('error', 'Email không hợp lệ', 'Vui lòng nhập đúng định dạng email');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function nextStep(step) {
+        if (!validateStep(step)) return;
+
+        if (currentStep < totalSteps) {
+            document.getElementById(`step-${currentStep}`).classList.add('hidden');
+            currentStep++;
+            document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+            updateProgress();
+        }
+    }
+
+    function prevStep(step) {
+        if (currentStep > 1) {
+            document.getElementById(`step-${currentStep}`).classList.add('hidden');
+            currentStep--;
+            document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+            updateProgress();
+        }
+    }
+
+    // Form submission
+    document.getElementById('trialForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!validateStep(currentStep)) return;
+
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = submitBtn.querySelector('.submit-text');
+        const loadingText = submitBtn.querySelector('.loading-text');
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitText.classList.add('hidden');
+        loadingText.classList.remove('hidden');
+
+        // Collect form data
+        const formData = new FormData(this);
+
+        // Submit to server
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide form and show success message
+                    document.getElementById('trialForm').classList.add('hidden');
+                    document.querySelector('.progress-bar').parentElement.classList.add('hidden');
+                    document.getElementById('success-message').classList.remove('hidden');
+
+                    // Display generated credentials
+                    document.getElementById('generated-username').textContent = data.username;
+                    document.getElementById('generated-password').textContent = data.password;
+
+                    showToast('success', 'Thành công!', 'Tài khoản đã được tạo và gửi về Email');
+                } else {
+                    throw new Error(data.message || 'Có lỗi xảy ra');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('error', 'Lỗi!', error.message || 'Có lỗi xảy ra khi đăng ký');
+
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.classList.remove('hidden');
+                loadingText.classList.add('hidden');
+            });
+    });
+
+    function showToast(type, title, message) {
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toast-icon');
+        const toastTitle = document.getElementById('toast-title');
+        const toastMessage = document.getElementById('toast-message');
+
+        if (type === 'success') {
+            toastIcon.innerHTML = '<i class="fas fa-check-circle text-green-500 text-xl"></i>';
+        } else if (type === 'error') {
+            toastIcon.innerHTML = '<i class="fas fa-exclamation-circle text-red-500 text-xl"></i>';
+        } else {
+            toastIcon.innerHTML = '<i class="fas fa-info-circle text-blue-500 text-xl"></i>';
+        }
+
+        toastTitle.textContent = title;
+        toastMessage.textContent = message;
+
+        toast.classList.remove('translate-x-full');
+
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+        }, 5000);
+    }
+</script>
+</body>
+</html>

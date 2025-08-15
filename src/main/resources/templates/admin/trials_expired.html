@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title='Tài khoản Trial Đã Hết hạn', content=~{::content}, currentPage='admin_trials_expired')}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block th:fragment="content">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Tài khoản Trial Đã Hết hạn</h1>
+            <p class="text-gray-600 mt-2">Quản lý và xử lý các tài khoản trial đã hết hạn, cần follow-up hoặc cleanup</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="bulkCleanup()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-medium flex items-center">
+                <i class="fas fa-trash mr-2"></i>
+                Xóa hàng loạt
+            </button>
+            <button onclick="bulkRenew()" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium flex items-center shadow-sm hover:shadow-md">
+                <i class="fas fa-redo mr-2"></i>
+                Gia hạn hàng loạt
+            </button>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-r-lg" role="alert" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert" th:text="${errorMessage}"></div>
+
+    <!-- Warning Banner -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    <strong>Cảnh báo:</strong> Có <span class="font-bold" th:text="${totalExpiredTrials ?: 0}">89</span> tài khoản đã hết hạn cần được xử lý.
+                    Các tài khoản này có thể bị xóa tự động sau 30 ngày kể từ khi hết hạn.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-red-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Hết hạn hôm nay</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${expiredToday ?: 0}">12</p>
+                        <p class="text-xs text-red-600">Cần xử lý ngay</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar-times text-orange-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Tuần này</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${expiredThisWeek ?: 0}">45</p>
+                        <p class="text-xs text-orange-600">7 ngày qua</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-star text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Tiềm năng cao</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${highPotentialExpired ?: 0}">23</p>
+                        <p class="text-xs text-yellow-600">Lead score > 70</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-recycle text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Đã gia hạn</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${renewedThisMonth ?: 0}">34</p>
+                        <p class="text-xs text-purple-600">Tháng này</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <form th:action="@{/admin/trials/expired}" method="get">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                    <label for="keyword" class="block text-sm font-medium text-gray-700 mb-1">Từ khóa</label>
+                    <input type="text" id="keyword" name="keyword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Tên, email, công ty..." th:value="${keyword}">
+                </div>
+                <div>
+                    <label for="expiredDays" class="block text-sm font-medium text-gray-700 mb-1">Thời gian hết hạn</label>
+                    <select id="expiredDays" name="expiredDays" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="">Tất cả</option>
+                        <option value="0-1" th:selected="${expiredDays == '0-1'}">Hôm nay</option>
+                        <option value="1-7" th:selected="${expiredDays == '1-7'}">1-7 ngày trước</option>
+                        <option value="8-30" th:selected="${expiredDays == '8-30'}">1-4 tuần trước</option>
+                        <option value="30+" th:selected="${expiredDays == '30+'}">Hơn 1 tháng</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="usageLevel" class="block text-sm font-medium text-gray-700 mb-1">Mức sử dụng</label>
+                    <select id="usageLevel" name="usageLevel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="">Tất cả</option>
+                        <option value="high" th:selected="${usageLevel == 'high'}">Cao (>20 ngày)</option>
+                        <option value="medium" th:selected="${usageLevel == 'medium'}">Trung bình (10-20 ngày)</option>
+                        <option value="low" th:selected="${usageLevel == 'low'}">Thấp (<10 ngày)</option>
+                        <option value="unused" th:selected="${usageLevel == 'unused'}">Chưa sử dụng</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="followUpStatus" class="block text-sm font-medium text-gray-700 mb-1">Trạng thái follow-up</label>
+                    <select id="followUpStatus" name="followUpStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="">Tất cả</option>
+                        <option value="not-contacted" th:selected="${followUpStatus == 'not-contacted'}">Chưa liên hệ</option>
+                        <option value="contacted" th:selected="${followUpStatus == 'contacted'}">Đã liên hệ</option>
+                        <option value="interested" th:selected="${followUpStatus == 'interested'}">Quan tâm</option>
+                        <option value="converted" th:selected="${followUpStatus == 'converted'}">Đã chuyển đổi</option>
+                        <option value="not-interested" th:selected="${followUpStatus == 'not-interested'}">Không quan tâm</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="companySize" class="block text-sm font-medium text-gray-700 mb-1">Quy mô công ty</label>
+                    <select id="companySize" name="companySize" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="">Tất cả</option>
+                        <option value="1-10" th:selected="${companySize == '1-10'}">1-10 nhân viên</option>
+                        <option value="11-50" th:selected="${companySize == '11-50'}">11-50 nhân viên</option>
+                        <option value="51-200" th:selected="${companySize == '51-200'}">51-200 nhân viên</option>
+                        <option value="200+" th:selected="${companySize == '200+'}">200+ nhân viên</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="highPotential" th:checked="${highPotential}" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-sm text-gray-700">Chỉ tiềm năng cao</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="needsCleanup" th:checked="${needsCleanup}" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-sm text-gray-700">Cần dọn dẹp</span>
+                    </label>
+                </div>
+                <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 font-medium flex items-center">
+                    <i class="fas fa-search mr-2"></i>Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Expired Trials Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">
+                        <input type="checkbox" id="select-all" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    </th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Người dùng</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Công ty</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Thời gian sử dụng</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Hết hạn</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Hoạt động cuối</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Trạng thái</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Lead Score</th>
+                    <th sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">Hành động</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                <tr th:each="trial : ${expiredTrialsPage.content}" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <input type="checkbox" class="trial-checkbox rounded border-gray-300 text-primary-600 focus:ring-primary-500" th:value="${trial.id}">
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8">
+                                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                                    <span class="text-sm font-medium text-white" th:text="${#strings.substring(trial.fullName, 0, 1)}">N</span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="font-medium text-gray-900" th:text="${trial.fullName}">Nguyễn Văn A</div>
+                                <div class="text-gray-600" th:text="${trial.email}">nguyenvana@email.com</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900" th:text="${trial.companyName}">ABC Technology</div>
+                        <div class="text-gray-600" th:text="${trial.industry ?: trial.companySize}">Software Development</div>
+                        <div class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1" th:text="${trial.companySize}">
+                            11-50 employees
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-gray-900 font-medium" th:text="${trial.usageDays} + ' ngày'">22 ngày</div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                            <div th:classappend="${trial.usagePercentage >= 70} ? 'bg-green-400' : (${trial.usagePercentage >= 40} ? 'bg-yellow-400' : 'bg-red-400')"
+                                 class="h-2 rounded-full" th:style="'width: ' + ${trial.usagePercentage} + '%'"></div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1" th:text="${trial.usagePercentage} + '% trial period'">73% trial period</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-red-600" th:text="${#temporals.format(trial.expiryDate, 'dd-MM-yyyy')}">12/01/2025</div>
+                        <div class="text-xs" th:classappend="${trial.expiredDaysAgo <= 1} ? 'text-red-600 font-medium' : (${trial.expiredDaysAgo <= 7} ? 'text-orange-600' : 'text-gray-500')"
+                             th:text="${trial.expiredDaysAgo} + ' ngày trước'">3 ngày trước</div>
+                        <span th:if="${trial.expiredDaysAgo <= 1}" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mt-1">
+                            Mới hết hạn
+                        </span>
+                        <span th:if="${trial.expiredDaysAgo > 30}" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-1">
+                            Cần dọn dẹp
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-gray-900" th:text="${trial.lastActivity != null ? #temporals.format(trial.lastActivity, 'dd-MM-yyyy') : 'Không có'}">10/01/2025</div>
+                        <div class="text-xs text-gray-500" th:if="${trial.lastActivity != null}">
+                            <span th:if="${trial.lastActivityType == 'LOGIN'}">Đăng nhập cuối</span>
+                            <span th:if="${trial.lastActivityType == 'SCAN'}">Quét QR cuối</span>
+                            <span th:if="${trial.lastActivityType == 'REPORT'}">Xem báo cáo cuối</span>
+                        </div>
+                        <div class="text-xs text-red-500" th:unless="${trial.lastActivity}">Chưa sử dụng</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span th:if="${trial.followUpStatus == 'NOT_CONTACTED'}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Chưa liên hệ
+                        </span>
+                        <span th:if="${trial.followUpStatus == 'CONTACTED'}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Đã liên hệ
+                        </span>
+                        <span th:if="${trial.followUpStatus == 'INTERESTED'}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Quan tâm
+                        </span>
+                        <span th:if="${trial.followUpStatus == 'CONVERTED'}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Đã chuyển đổi
+                        </span>
+                        <span th:if="${trial.followUpStatus == 'NOT_INTERESTED'}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Không quan tâm
+                        </span>
+                        <div class="text-xs text-gray-400 mt-1" th:if="${trial.lastContactDate}" th:text="'Liên hệ: ' + ${#temporals.format(trial.lastContactDate, 'dd/MM')}">Liên hệ: 14/01</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                                <div th:classappend="${trial.leadScore >= 70} ? 'bg-green-500' : (${trial.leadScore >= 50} ? 'bg-yellow-500' : 'bg-red-500')"
+                                     class="h-2 rounded-full" th:style="'width: ' + ${trial.leadScore} + '%'"></div>
+                            </div>
+                            <span class="text-sm font-medium" th:classappend="${trial.leadScore >= 70} ? 'text-green-600' : (${trial.leadScore >= 50} ? 'text-yellow-600' : 'text-red-600')" th:text="${trial.leadScore}">85</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <span th:if="${trial.leadScore >= 70}">Tiềm năng cao</span>
+                            <span th:if="${trial.leadScore >= 50 && trial.leadScore < 70}">Tiềm năng trung bình</span>
+                            <span th:if="${trial.leadScore < 50}">Tiềm năng thấp</span>
+                        </div>
+                    </td>
+                    <td sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-4 text-center">
+                        <div class="flex justify-center items-center space-x-2">
+                            <a th:href="@{/admin/trials/renew/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-green-100 text-green-600 hover:bg-green-200"
+                               title="Gia hạn trial">
+                                <i class="fas fa-redo"></i>
+                            </a>
+                            <a th:href="@{/admin/trials/contact/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 hover:bg-blue-200"
+                               title="Liên hệ khách hàng">
+                                <i class="fas fa-phone"></i>
+                            </a>
+                            <a th:href="@{/admin/trials/view/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 hover:bg-gray-200"
+                               title="Xem lịch sử">
+                                <i class="fas fa-history"></i>
+                            </a>
+                            <a th:href="@{/admin/trials/delete/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200"
+                               title="Xóa vĩnh viễn"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn trial này không? Hành động này không thể hoàn tác.')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${expiredTrialsPage.isEmpty()}">
+                    <td th:attr="colspan=${#authorization.expression('hasAuthority(''ROLE_ADMIN'')') ? 9 : 8}" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                            <p>Không có trial nào đã hết hạn</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${expiredTrialsPage != null && expiredTrialsPage.totalPages > 0}" class="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-between sm:px-6">
+            <div class="text-sm text-gray-700">
+                Hiển thị <span class="font-semibold" th:text="${expiredTrialsPage.number * expiredTrialsPage.size + 1}">1</span>
+                đến <span class="font-semibold" th:text="${expiredTrialsPage.number * expiredTrialsPage.size + expiredTrialsPage.numberOfElements}">20</span>
+                trong <span class="font-semibold" th:text="${expiredTrialsPage.totalElements}">89</span> mục
+            </div>
+            <nav th:if="${expiredTrialsPage.totalPages > 1}" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <a th:href="@{/admin/trials/expired(page=${expiredTrialsPage.number - 1}, keyword=${keyword}, expiredDays=${expiredDays}, usageLevel=${usageLevel}, followUpStatus=${followUpStatus}, companySize=${companySize}, highPotential=${highPotential}, needsCleanup=${needsCleanup})}"
+                   th:classappend="${expiredTrialsPage.first} ? 'pointer-events-none opacity-50'"
+                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <th:block th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, expiredTrialsPage.number - 2), T(java.lang.Math).min(expiredTrialsPage.totalPages - 1, expiredTrialsPage.number + 2))}">
+                    <a th:href="@{/admin/trials/expired(page=${i}, keyword=${keyword}, expiredDays=${expiredDays}, usageLevel=${usageLevel}, followUpStatus=${followUpStatus}, companySize=${companySize}, highPotential=${highPotential}, needsCleanup=${needsCleanup})}"
+                       th:classappend="${i == expiredTrialsPage.number} ? 'z-10 bg-primary-50 border-primary-500 text-primary-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">1</a>
+                </th:block>
+                <a th:href="@{/admin/trials/expired(page=${expiredTrialsPage.number + 1}, keyword=${keyword}, expiredDays=${expiredDays}, usageLevel=${usageLevel}, followUpStatus=${followUpStatus}, companySize=${companySize}, highPotential=${highPotential}, needsCleanup=${needsCleanup})}"
+                   th:classappend="${expiredTrialsPage.last} ? 'pointer-events-none opacity-50'"
+                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Bulk Actions and Analytics -->
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Bulk Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Hành động hàng loạt</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chọn trials để xử lý</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="selectHighPotential()" class="px-3 py-2 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200">
+                            Chọn tiềm năng cao
+                        </button>
+                        <button onclick="selectRecentExpired()" class="px-3 py-2 text-xs bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200">
+                            Chọn mới hết hạn
+                        </button>
+                        <button onclick="selectNeedsCleanup()" class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200">
+                            Chọn cần dọn dẹp
+                        </button>
+                        <button onclick="selectNotContacted()" class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                            Chọn chưa liên hệ
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="bulkRenewSelected()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                        <i class="fas fa-redo mr-2"></i>Gia hạn
+                    </button>
+                    <button onclick="bulkContactSelected()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                        <i class="fas fa-phone mr-2"></i>Liên hệ
+                    </button>
+                    <button onclick="bulkEmailSelected()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                        <i class="fas fa-envelope mr-2"></i>Gửi Email
+                    </button>
+                    <button onclick="bulkDeleteSelected()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                        <i class="fas fa-trash mr-2"></i>Xóa
+                    </button>
+                </div>
+                <div id="selected-info" class="hidden text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                    Đã chọn <span id="selected-count">0</span> tài khoản
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Analytics -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Phân tích nhanh</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Trung bình thời gian sử dụng:</span>
+                    <span class="font-semibold text-gray-900">16.3 ngày</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Tỷ lệ có tiềm năng cao:</span>
+                    <span class="font-semibold text-green-600">26%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Chưa liên hệ:</span>
+                    <span class="font-semibold text-orange-600">58%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Cần dọn dẹp (>30 ngày):</span>
+                    <span class="font-semibold text-red-600">34%</span>
+                </div>
+                <div class="pt-2 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Dự kiến có thể gia hạn:</span>
+                        <span class="font-semibold text-blue-600">23 tài khoản</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeExpiredTrialsPage();
+    });
+
+    function initializeExpiredTrialsPage() {
+        // Initialize select all functionality
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.trial-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedInfo();
+        });
+
+        // Initialize individual checkboxes
+        document.querySelectorAll('.trial-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedInfo);
+        });
+    }
+
+    function updateSelectedInfo() {
+        const selectedCheckboxes = document.querySelectorAll('.trial-checkbox:checked');
+        const selectedInfo = document.getElementById('selected-info');
+        const selectedCount = document.getElementById('selected-count');
+
+        if (selectedCheckboxes.length > 0) {
+            selectedInfo.classList.remove('hidden');
+            selectedCount.textContent = selectedCheckboxes.length;
+        } else {
+            selectedInfo.classList.add('hidden');
+        }
+    }
+
+    function selectHighPotential() {
+        document.querySelectorAll('.trial-checkbox').forEach(checkbox => {
+            // Logic to select high potential trials (would be based on data attributes)
+            checkbox.checked = Math.random() > 0.7; // Simulate selection
+        });
+        updateSelectedInfo();
+    }
+
+    function selectRecentExpired() {
+        document.querySelectorAll('.trial-checkbox').forEach(checkbox => {
+            checkbox.checked = Math.random() > 0.8;
+        });
+        updateSelectedInfo();
+    }
+
+    function selectNeedsCleanup() {
+        document.querySelectorAll('.trial-checkbox').forEach(checkbox => {
+            checkbox.checked = Math.random() > 0.9;
+        });
+        updateSelectedInfo();
+    }
+
+    function selectNotContacted() {
+        document.querySelectorAll('.trial-checkbox').forEach(checkbox => {
+            checkbox.checked = Math.random() > 0.6;
+        });
+        updateSelectedInfo();
+    }
+
+    function bulkRenewSelected() {
+        const selected = document.querySelectorAll('.trial-checkbox:checked');
+        if (selected.length === 0) {
+            alert('Vui lòng chọn ít nhất một tài khoản');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn gia hạn ${selected.length} tài khoản đã chọn?`)) {
+            // Implement bulk renew logic
+            alert(`Đã gia hạn ${selected.length} tài khoản`);
+        }
+    }
+
+    function bulkContactSelected() {
+        const selected = document.querySelectorAll('.trial-checkbox:checked');
+        if (selected.length === 0) {
+            alert('Vui lòng chọn ít nhất một tài khoản');
+            return;
+        }
+        // Implement bulk contact logic
+        alert(`Đang tạo task liên hệ cho ${selected.length} khách hàng`);
+    }
+
+    function bulkEmailSelected() {
+        const selected = document.querySelectorAll('.trial-checkbox:checked');
+        if (selected.length === 0) {
+            alert('Vui lòng chọn ít nhất một tài khoản');
+            return;
+        }
+        // Implement bulk email logic
+        alert(`Đang gửi email đến ${selected.length} khách hàng`);
+    }
+
+    function bulkDeleteSelected() {
+        const selected = document.querySelectorAll('.trial-checkbox:checked');
+        if (selected.length === 0) {
+            alert('Vui lòng chọn ít nhất một tài khoản');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn xóa vĩnh viễn ${selected.length} tài khoản đã chọn? Hành động này không thể hoàn tác.`)) {
+            // Implement bulk delete logic
+            alert(`Đã xóa ${selected.length} tài khoản`);
+        }
+    }
+
+    function bulkCleanup() {
+        if (confirm('Bạn có chắc muốn xóa tất cả tài khoản hết hạn quá 30 ngày?')) {
+            // Implement cleanup logic
+            alert('Đang thực hiện dọn dẹp tự động...');
+        }
+    }
+
+    function bulkRenew() {
+        if (confirm('Bạn có chắc muốn gia hạn tất cả tài khoản có tiềm năng cao?')) {
+            // Implement bulk renew logic
+            alert('Đang gia hạn các tài khoản có tiềm năng cao...');
+        }
+    }
+</script>
+</html>

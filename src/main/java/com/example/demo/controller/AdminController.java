@@ -2,11 +2,9 @@ package com.example.demo.controller;
 
 import com.example.demo.Model.*;
 import com.example.demo.Repository.RoleRepository;
+import com.example.demo.Repository.TrialAccountRepository;
 import com.example.demo.dto.UserDTO;
-import com.example.demo.service.PatrolService;
-import com.example.demo.service.QrCodeService;
-import com.example.demo.service.UserService;
-import com.example.demo.service.VehicleViolationService;
+import com.example.demo.service.*;
 import com.google.zxing.WriterException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,9 +29,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -45,14 +41,22 @@ public class AdminController {
     private final RoleRepository roleRepository;
     private final UserService userService;
     private final VehicleViolationService violationService;
+    @Autowired
+    private TrialAccountRepository trialAccountRepository;
+    @Autowired
+    private TrialAccountService trialAccountService;
 
     @Autowired
-    public AdminController(QrCodeService qrCodeService, PatrolService patrolService, RoleRepository roleRepository, UserService userService, VehicleViolationService violationService) {
+    public AdminController(QrCodeService qrCodeService, PatrolService patrolService, RoleRepository roleRepository,
+                           UserService userService, VehicleViolationService violationService,
+                           TrialAccountRepository trialAccountRepository, TrialAccountService trialAccountService) {
         this.qrCodeService = qrCodeService;
         this.patrolService = patrolService;
         this.roleRepository = roleRepository;
         this.userService = userService;
         this.violationService = violationService;
+        this.trialAccountRepository = trialAccountRepository;
+        this.trialAccountService = trialAccountService;
     }
 
     @GetMapping("/users")
@@ -388,5 +392,93 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: không thể xóa vi phạm.");
         }
         return "redirect:/admin/violations";
+    }
+
+    @GetMapping("/trials/active")
+    public String listActiveTrials(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String daysLeft,
+            @RequestParam(required = false) String companySize,
+            @RequestParam(defaultValue = "false") boolean highActivity,
+            @RequestParam(defaultValue = "false") boolean expiringSoon,
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("createdAt").descending());
+
+        Page<TrialAccount> activeTrialsPage = trialAccountService.findActiveTrials(
+                keyword, daysLeft, companySize, highActivity, expiringSoon, pageable
+        );
+
+        Map<String, Long> stats = trialAccountService.getActiveStats();
+
+        model.addAllAttributes(stats);
+        model.addAttribute("activeTrialsPage", activeTrialsPage);
+
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("daysLeft", daysLeft);
+        model.addAttribute("companySize", companySize);
+        model.addAttribute("highActivity", highActivity);
+        model.addAttribute("expiringSoon", expiringSoon);
+
+        model.addAttribute("currentPage", "admin_trials");
+        return "admin/trials_list";
+    }
+    @GetMapping("/trials/expired")
+    public String listExpiredTrials(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, 20, Sort.by("expiresAt").descending());
+
+        Page<TrialAccount> expiredTrialsPage = trialAccountService.findInactiveTrials(keyword, status, pageable);
+        Map<String, Long> stats = trialAccountService.getExpiredStats();
+
+        model.addAttribute("expiredTrialsPage", expiredTrialsPage);
+        model.addAllAttributes(stats);
+
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("status", status); // Truyền status cho filter
+
+        model.addAttribute("currentPage", "admin_trials_expired");
+        return "admin/trials_expired";
+    }
+
+    @GetMapping("/trials/edit/{id}")
+    public String showEditTrialForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        Optional<TrialAccount> trialOpt = trialAccountRepository.findById(id);
+        if (trialOpt.isEmpty()){
+            ra.addFlashAttribute("errorMessage", "Không tìm thấy tài khoản dùng thử ID: " + id);
+            return "redirect:/admin/trials";
+        }
+        model.addAttribute("trial", trialOpt.get());
+        model.addAttribute("pageTitle", "Chỉnh sửa tài khoản dùng thử");
+        model.addAttribute("currentPage", "admin_trials");
+        // Giả sử bạn có file form riêng tên là "trial_form.html"
+        return "admin/trial_form";
+    }
+
+    @PostMapping("/trials/delete/{id}")
+    public String deleteTrial(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            trialAccountService.deleteTrialAccountById(id);
+            ra.addFlashAttribute("successMessage", "Xóa tài khoản thành công!");
+        } catch (Exception e) {
+            ra.addFlashAttribute("errorMessage", "Lỗi khi xóa tài khoản: " + e.getMessage());
+        }
+        return "redirect:/admin/trials";
+    }
+
+    @PostMapping("/trials/extend/{id}")
+    public String extendTrial(@PathVariable Long id, @RequestParam int days, RedirectAttributes ra) {
+        try {
+            TrialAccount trial = trialAccountService.extendTrial(id, days);
+            ra.addFlashAttribute("successMessage", "Gia hạn thành công " + days + " ngày cho tài khoản " + trial.getEmail());
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/trials";
     }
 }

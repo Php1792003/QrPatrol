@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+    <title>Thống kê Trial Accounts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Thống kê Trial Accounts</h1>
+                <p class="mt-2 text-sm text-gray-600">Phân tích dữ liệu và xu hướng của các tài khoản dùng thử</p>
+            </div>
+            <div class="flex space-x-3">
+                <select id="time-range" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="7">7 ngày qua</option>
+                    <option value="30" selected>30 ngày qua</option>
+                    <option value="90">90 ngày qua</option>
+                    <option value="365">1 năm qua</option>
+                </select>
+                <button onclick="exportReport()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-download mr-2"></i>
+                    Xuất báo cáo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Tổng đăng ký</p>
+                        <p class="text-3xl font-bold text-gray-900">1,247</p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-green-600 text-sm font-medium">+23.1%</span>
+                            <span class="text-gray-500 text-sm ml-2">so với tháng trước</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Tỷ lệ chuyển đổi</p>
+                        <p class="text-3xl font-bold text-gray-900">73.5%</p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-green-600 text-sm font-medium">+5.2%</span>
+                            <span class="text-gray-500 text-sm ml-2">tăng từ 68.3%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-clock text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Thời gian sử dụng TB</p>
+                        <p class="text-3xl font-bold text-gray-900">18.6</p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-gray-600 text-sm">ngày</span>
+                            <span class="text-gray-500 text-sm ml-2">trên 30 ngày trial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-dollar-sign text-orange-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Revenue từ trial</p>
+                        <p class="text-3xl font-bold text-gray-900">₫847M</p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-green-600 text-sm font-medium">+31.4%</span>
+                            <span class="text-gray-500 text-sm ml-2">tháng này</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Trial Registrations Over Time -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Đăng ký theo thời gian</h3>
+                <div class="flex space-x-2">
+                    <button onclick="toggleChartType('registrations', 'line')" class="chart-toggle px-3 py-1 text-xs rounded-md bg-indigo-100 text-indigo-700">Line</button>
+                    <button onclick="toggleChartType('registrations', 'bar')" class="chart-toggle px-3 py-1 text-xs rounded-md text-gray-600 hover:bg-gray-100">Bar</button>
+                </div>
+            </div>
+            <div class="h-80">
+                <canvas id="registrationsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Conversion Funnel -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Phễu chuyển đổi</h3>
+            <div class="space-y-4">
+                <div class="relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Đăng ký trial</span>
+                        <span class="text-sm font-bold text-gray-900">1,247</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-blue-600 h-3 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1">100%</span>
+                </div>
+
+                <div class="relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Kích hoạt tài khoản</span>
+                        <span class="text-sm font-bold text-gray-900">1,098</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-green-500 h-3 rounded-full" style="width: 88%"></div>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1">88.0%</span>
+                </div>
+
+                <div class="relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Sử dụng thường xuyên</span>
+                        <span class="text-sm font-bold text-gray-900">856</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-yellow-500 h-3 rounded-full" style="width: 69%"></div>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1">68.6%</span>
+                </div>
+
+                <div class="relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Chuyển đổi thành khách hàng</span>
+                        <span class="text-sm font-bold text-gray-900">917</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-purple-600 h-3 rounded-full" style="width: 73.5%"></div>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1">73.5%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analytics -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Company Size Distribution -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Phân bố theo quy mô công ty</h3>
+            <div class="h-64">
+                <canvas id="companySizeChart"></canvas>
+            </div>
+            <div class="mt-4 space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                        <span>1-10 nhân viên</span>
+                    </div>
+                    <span class="font-medium">45%</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                        <span>11-50 nhân viên</span>
+                    </div>
+                    <span class="font-medium">32%</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                        <span>51-200 nhân viên</span>
+                    </div>
+                    <span class="font-medium">18%</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                        <span>200+ nhân viên</span>
+                    </div>
+                    <span class="font-medium">5%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geographic Distribution -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Phân bố địa lý</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRkY0NDQ0Ii8+CjxyZWN0IHk9IjgiIHdpZHRoPSIyNCIgaGVpZ2h0PSI4IiBmaWxsPSIjRkZEQjQ0Ii8+Cjwvc3ZnPgo=" alt="VN Flag" class="w-6 h-4 rounded mr-3">
+                        <span class="text-sm font-medium">Hồ Chí Minh</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">423</div>
+                        <div class="text-xs text-gray-500">33.9%</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRkY0NDQ0Ii8+CjxyZWN0IHk9IjgiIHdpZHRoPSIyNCIgaGVpZ2h0PSI4IiBmaWxsPSIjRkZEQjQ0Ii8+Cjwvc3ZnPgo=" alt="VN Flag" class="w-6 h-4 rounded mr-3">
+                        <span class="text-sm font-medium">Hà Nội</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">318</div>
+                        <div class="text-xs text-gray-500">25.5%</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRkY0NDQ0Ii8+CjxyZWN0IHk9IjgiIHdpZHRoPSIyNCIgaGVpZ2h0PSI4IiBmaWxsPSIjRkZEQjQ0Ii8+Cjwvc3ZnPgo=" alt="VN Flag" class="w-6 h-4 rounded mr-3">
+                        <span class="text-sm font-medium">Đà Nẵng</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">187</div>
+                        <div class="text-xs text-gray-500">15.0%</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRkY0NDQ0Ii8+CjxyZWN0IHk9IjgiIHdpZHRoPSIyNCIgaGVpZ2h0PSI4IiBmaWxsPSIjRkZEQjQ0Ii8+Cjwvc3ZnPgo=" alt="VN Flag" class="w-6 h-4 rounded mr-3">
+                        <span class="text-sm font-medium">Cần Thơ</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">124</div>
+                        <div class="text-xs text-gray-500">9.9%</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-6 h-4 bg-gray-300 rounded mr-3"></div>
+                        <span class="text-sm font-medium">Khác</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">195</div>
+                        <div class="text-xs text-gray-500">15.6%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Industries -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Ngành nghề hàng đầu</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-laptop-code text-blue-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium">Technology</div>
+                            <div class="text-xs text-gray-500">Công nghệ thông tin</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">387</div>
+                        <div class="text-xs text-gray-500">31.0%</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-industry text-green-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium">Manufacturing</div>
+                            <div class="text-xs text-gray-500">Sản xuất</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">224</div>
+                        <div class="text-xs text-gray-500">18.0%</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-shopping-cart text-yellow-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium">Retail</div>
+                            <div class="text-xs text-gray-500">Bán lẻ</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">186</div>
+                        <div class="text-xs text-gray-500">14.9%</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-graduation-cap text-purple-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium">Education</div>
+                            <div class="text-xs text-gray-500">Giáo dục</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">142</div>
+                        <div class="text-xs text-gray-500">11.4%</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-heartbeat text-red-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium">Healthcare</div>
+                            <div class="text-xs text-gray-500">Chăm sóc sức khỏe</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">98</div>
+                        <div class="text-xs text-gray-500">7.9%</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-ellipsis-h text-gray-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium">Other</div>
+                            <div class="text-xs text-gray-500">Khác</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold">210</div>
+                        <div class="text-xs text-gray-500">16.8%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Analytics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Feature Usage -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Sử dụng tính năng</h3>
+            <div class="h-64">
+                <canvas id="featureUsageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- User Activity Heatmap -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Hoạt động người dùng theo giờ</h3>
+            <div class="grid grid-cols-24 gap-1 mb-4">
+                <!-- Hours 0-23 -->
+                <div class="text-xs text-center text-gray-500">0</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">2</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">4</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">6</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">8</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">10</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">12</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">14</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">16</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">18</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">20</div>
+                <div class="text-xs text-center text-gray-500"></div>
+                <div class="text-xs text-center text-gray-500">22</div>
+                <div class="text-xs text-center text-gray-500"></div>
+            </div>
+
+            <!-- Days of week with activity levels -->
+            <div class="space-y-1">
+                <div class="flex items-center">
+                    <div class="w-12 text-xs text-gray-500">T2</div>
+                    <div class="flex-1 grid grid-cols-24 gap-1">
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-200 rounded-sm"></div>
+                        <div class="h-4 bg-green-200 rounded-sm"></div>
+                        <div class="h-4 bg-green-300 rounded-sm"></div>
+                        <div class="h-4 bg-green-300 rounded-sm"></div>
+                        <div class="h-4 bg-green-400 rounded-sm"></div>
+                        <div class="h-4 bg-green-500 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-700 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-500 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-700 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-500 rounded-sm"></div>
+                        <div class="h-4 bg-green-400 rounded-sm"></div>
+                        <div class="h-4 bg-green-300 rounded-sm"></div>
+                        <div class="h-4 bg-green-200 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                    </div>
+                </div>
+                <!-- Repeat for other days with different patterns -->
+                <div class="flex items-center">
+                    <div class="w-12 text-xs text-gray-500">T3</div>
+                    <div class="flex-1 grid grid-cols-24 gap-1">
+                        <!-- Similar pattern for Tuesday -->
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-200 rounded-sm"></div>
+                        <div class="h-4 bg-green-300 rounded-sm"></div>
+                        <div class="h-4 bg-green-400 rounded-sm"></div>
+                        <div class="h-4 bg-green-500 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-700 rounded-sm"></div>
+                        <div class="h-4 bg-green-800 rounded-sm"></div>
+                        <div class="h-4 bg-green-700 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-700 rounded-sm"></div>
+                        <div class="h-4 bg-green-800 rounded-sm"></div>
+                        <div class="h-4 bg-green-700 rounded-sm"></div>
+                        <div class="h-4 bg-green-600 rounded-sm"></div>
+                        <div class="h-4 bg-green-500 rounded-sm"></div>
+                        <div class="h-4 bg-green-400 rounded-sm"></div>
+                        <div class="h-4 bg-green-300 rounded-sm"></div>
+                        <div class="h-4 bg-green-200 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                        <div class="h-4 bg-green-100 rounded-sm"></div>
+                    </div>
+                </div>
+                <!-- Add remaining days (T4, T5, T6, T7, CN) with similar patterns -->
+            </div>
+
+            <div class="mt-4 flex items-center justify-between text-xs text-gray-500">
+                <span>Ít hoạt động</span>
+                <div class="flex space-x-1">
+                    <div class="w-3 h-3 bg-green-100 rounded-sm"></div>
+                    <div class="w-3 h-3 bg-green-300 rounded-sm"></div>
+                    <div class="w-3 h-3 bg-green-500 rounded-sm"></div>
+                    <div class="w-3 h-3 bg-green-700 rounded-sm"></div>
+                    <div class="w-3 h-3 bg-green-900 rounded-sm"></div>
+                </div>
+                <span>Nhiều hoạt động</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Hiệu suất chi tiết</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chỉ số</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá trị hiện tại</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tháng trước</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thay đổi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mục tiêu</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Tỷ lệ đăng ký</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12.3%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10.1%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+2.2%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Đang cải thiện
+                            </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Tỷ lệ kích hoạt</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">88.0%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">85.2%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+2.8%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">90%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Đạt mục tiêu
+                            </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Thời gian sử dụng TB</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">18.6 ngày</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">17.2 ngày</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+1.4 ngày</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">20 ngày</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Cần cải thiện
+                            </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Tỷ lệ chuyển đổi</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">73.5%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">68.3%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">+5.2%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">75%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Xuất sắc
+                            </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let registrationsChart, companySizeChart, featureUsageChart;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+
+        // Time range selector
+        document.getElementById('time-range').addEventListener('change', function() {
+            updateChartsData(this.value);
+        });
+    });
+
+    function initializeCharts() {
+        // Registrations Chart
+        const registrationsCtx = document.getElementById('registrationsChart').getContext('2d');
+        registrationsChart = new Chart(registrationsCtx, {
+            type: 'line',
+            data: {
+                labels: ['1/1', '2/1', '3/1', '4/1', '5/1', '6/1', '7/1', '8/1', '9/1', '10/1', '11/1', '12/1', '13/1', '14/1', '15/1'],
+                datasets: [{
+                    label: 'Đăng ký mới',
+                    data: [23, 31, 28, 45, 52, 38, 42, 35, 48, 41, 39, 56, 63, 47, 51],
+                    borderColor: 'rgb(99, 102, 241)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Company Size Chart
+        const companySizeCtx = document.getElementById('companySizeChart').getContext('2d');
+        companySizeChart = new Chart(companySizeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['1-10', '11-50', '51-200', '200+'],
+                datasets: [{
+                    data: [45, 32, 18, 5],
+                    backgroundColor: [
+                        'rgb(59, 130, 246)',
+                        'rgb(16, 185, 129)',
+                        'rgb(245, 158, 11)',
+                        'rgb(139, 92, 246)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Feature Usage Chart
+        const featureUsageCtx = document.getElementById('featureUsageChart').getContext('2d');
+        featureUsageChart = new Chart(featureUsageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['QR Scan', 'Reports', 'Analytics', 'User Mgmt', 'Settings', 'Mobile App'],
+                datasets: [{
+                    label: 'Số lượng sử dụng',
+                    data: [856, 724, 634, 512, 423, 387],
+                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                    borderColor: 'rgb(99, 102, 241)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    function toggleChartType(chartName, type) {
+        if (chartName === 'registrations') {
+            registrationsChart.config.type = type;
+            registrationsChart.update();
+        }
+
+        // Update toggle buttons
+        const buttons = event.target.parentElement.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.className = 'chart-toggle px-3 py-1 text-xs rounded-md text-gray-600 hover:bg-gray-100';
+        });
+        event.target.className = 'chart-toggle px-3 py-1 text-xs rounded-md bg-indigo-100 text-indigo-700';
+    }
+
+    function updateChartsData(timeRange) {
+        // Update charts based on selected time range
+        console.log('Updating charts for time range:', timeRange);
+        // Implement actual data fetching and chart updates here
+    }
+
+    function exportReport() {
+        // Generate and download analytics report
+        showToast('info', 'Đang xuất báo cáo', 'Đang tạo file báo cáo chi tiết...');
+    }
+
+    function showToast(type, title, message) {
+        console.log(`${type}: ${title} - ${message}`);
+        // Implement actual toast notification
+    }
+</script>
+</body>
+</html>

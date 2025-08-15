@@ -2,6 +2,7 @@
 
 package com.example.demo.Model;
 
+import com.example.demo.Enum.PenaltyStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+  <title>Cài đặt Trial System</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Cài đặt Trial System</h1>
+      <p class="text-gray-600 mt-2">Quản lý cấu hình và thiết lập cho hệ thống tài khoản dùng thử</p>
+    </div>
+    <div class="flex space-x-3">
+      <button onclick="resetToDefaults()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-medium flex items-center">
+        <i class="fas fa-undo mr-2"></i>
+        Khôi phục mặc định
+      </button>
+      <button onclick="saveAllSettings()" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium flex items-center shadow-sm hover:shadow-md">
+        <i class="fas fa-save mr-2"></i>
+        Lưu thay đổi
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings Navigation Tabs -->
+  <div class="mb-6">
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8">
+        <button onclick="switchTab('general')" class="settings-tab active py-2 px-1 border-b-2 font-medium text-sm border-primary-500 text-primary-600">
+          <i class="fas fa-cog mr-2"></i>Cài đặt chung
+        </button>
+        <button onclick="switchTab('registration')" class="settings-tab py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-user-plus mr-2"></i>Đăng ký
+        </button>
+        <button onclick="switchTab('notifications')" class="settings-tab py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-bell mr-2"></i>Thông báo
+        </button>
+        <button onclick="switchTab('automation')" class="settings-tab py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-robot mr-2"></i>Tự động hóa
+        </button>
+        <button onclick="switchTab('integrations')" class="settings-tab py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+          <i class="fas fa-plug mr-2"></i>Tích hợp
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- General Settings Tab -->
+  <div id="general-tab" class="settings-content">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Trial Duration Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center mb-4">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-clock text-blue-600"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Thời gian trial</h3>
+            <p class="text-sm text-gray-600">Cấu hình thời gian sử dụng trial</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian trial mặc định</label>
+            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+              <option value="7">7 ngày</option>
+              <option value="14">14 ngày</option>
+              <option value="30" selected>30 ngày</option>
+              <option value="60">60 ngày</option>
+              <option value="90">90 ngày</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian gia hạn tối đa</label>
+            <div class="flex items-center space-x-2">
+              <input type="number" value="90" min="30" max="365" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Số lần gia hạn tối đa</label>
+            <input type="number" value="3" min="1" max="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Cảnh báo hết hạn</label>
+              <p class="text-xs text-gray-500">Gửi thông báo trước khi hết hạn</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Pool Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center mb-4">
+          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-database text-green-600"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Pool tài khoản</h3>
+            <p class="text-sm text-gray-600">Quản lý pool tài khoản trial</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Số tài khoản tối thiểu</label>
+            <input type="number" value="50" min="10" max="1000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+            <p class="text-xs text-gray-500 mt-1">Tự động tạo thêm khi dưới ngưỡng này</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Batch size tạo tài khoản</label>
+            <input type="number" value="100" min="10" max="500" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Prefix tài khoản</label>
+            <input type="text" value="trial" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+            <p class="text-xs text-gray-500 mt-1">VD: trial001, trial002...</p>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Tự động xóa tài khoản hết hạn</label>
+              <p class="text-xs text-gray-500">Sau 30 ngày hết hạn</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Limits -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center mb-4">
+          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-shield-alt text-yellow-600"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Giới hạn đăng ký</h3>
+            <p class="text-sm text-gray-600">Kiểm soát spam và abuse</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Giới hạn theo IP (per ngày)</label>
+            <input type="number" value="3" min="1" max="20" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Giới hạn theo email domain</label>
+            <textarea rows="3" placeholder="gmail.com&#10;yahoo.com&#10;outlook.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+            <p class="text-xs text-gray-500 mt-1">Một domain mỗi dòng, để trống để cho phép tất cả</p>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Yêu cầu xác thực email</label>
+              <p class="text-xs text-gray-500">Gửi email xác thực trước khi kích hoạt</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Access Control -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center mb-4">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+            <i class="fas fa-key text-purple-600"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Quyền truy cập</h3>
+            <p class="text-sm text-gray-600">Cấu hình tính năng cho trial</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">QR Code Scanning</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Basic Reports</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Advanced Analytics</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">API Access</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Export Data</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Giới hạn QR codes</label>
+            <input type="number" value="100" min="10" max="10000" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Settings Tab -->
+  <div id="registration-tab" class="settings-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Registration Form Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Form đăng ký</h3>
+
+        <div class="space-y-4">
+          <div class="space-y-3">
+            <h4 class="text-sm font-medium text-gray-700">Thông tin bắt buộc</h4>
+            <div class="space-y-2">
+              <label class="flex items-center">
+                <input type="checkbox" checked disabled class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Họ tên</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" checked disabled class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Email</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Số điện thoại</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Tên công ty</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Quy mô công ty</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Ngành nghề</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Câu hỏi khảo sát (tùy chọn)</label>
+            <textarea rows="4" placeholder="Bạn đã từng sử dụng hệ thống QR Patrol nào chưa?&#10;Mục đích sử dụng chính của bạn là gì?" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Welcome Message Settings -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông điệp chào mừng</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề email chào mừng</label>
+            <input type="text" value="Chào mừng bạn đến với QR Patrol Trial!" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nội dung email</label>
+            <textarea rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none">Cảm ơn bạn đã đăng ký dùng thử QR Patrol!
+
+Thông tin đăng nhập của bạn:
+- Username: {username}
+- Password: {password}
+- Thời gian trial: {trial_days} ngày
+
+Bắt đầu trải nghiệm tại: {login_url}
+
+Nếu có thắc mắc, vui lòng liên hệ support@qrpatrol.com</textarea>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">Variables có thể sử dụng:</label>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">{username}</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">{password}</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">{trial_days}</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">{login_url}</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">{full_name}</span>
+              <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">{company_name}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Settings Tab -->
+  <div id="notifications-tab" class="settings-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Email Notifications -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông báo Email</h3>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Email chào mừng</label>
+              <p class="text-xs text-gray-500">Gửi ngay sau khi đăng ký</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Nhắc nhở giữa kỳ</label>
+              <p class="text-xs text-gray-500">Gửi ở giữa thời gian trial</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Cảnh báo hết hạn</label>
+              <p class="text-xs text-gray-500">Gửi trước 3 ngày hết hạn</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Thông báo hết hạn</label>
+              <p class="text-xs text-gray-500">Gửi khi trial đã hết hạn</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Follow-up sau hết hạn</label>
+              <p class="text-xs text-gray-500">Gửi sau 1 tuần hết hạn</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Notifications -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thông báo Admin</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email admin nhận thông báo</label>
+            <input type="email" value="admin@qrpatrol.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Đăng ký mới</label>
+              <p class="text-xs text-gray-500">Thông báo khi có trial mới</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Pool tài khoản thấp</label>
+              <p class="text-xs text-gray-500">Cảnh báo khi dưới ngưỡng</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Báo cáo hàng tuần</label>
+              <p class="text-xs text-gray-500">Tóm tắt trial trong tuần</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Automation Settings Tab -->
+  <div id="automation-tab" class="settings-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Auto Actions -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Hành động tự động</h3>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Tự động kích hoạt trial</label>
+              <p class="text-xs text-gray-500">Sau khi xác thực email</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Tạo tài khoản mới tự động</label>
+              <p class="text-xs text-gray-500">Khi pool dưới ngưỡng</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Chuyển lead sang CRM</label>
+              <p class="text-xs text-gray-500">Khi trial có hoạt động cao</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Tạm dừng trial không hoạt động</label>
+              <p class="text-xs text-gray-500">Sau 7 ngày không login</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scoring Rules -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Lead Scoring</h3>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Login hàng ngày</label>
+            <div class="flex items-center space-x-2">
+              <input type="number" value="10" min="0" max="100" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+              <span class="text-xs text-gray-500">điểm</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Tạo QR code</label>
+            <div class="flex items-center space-x-2">
+              <input type="number" value="5" min="0" max="100" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+              <span class="text-xs text-gray-500">điểm</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Scan QR code</label>
+            <div class="flex items-center space-x-2">
+              <input type="number" value="3" min="0" max="100" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+              <span class="text-xs text-gray-500">điểm</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Xem báo cáo</label>
+            <div class="flex items-center space-x-2">
+              <input type="number" value="8" min="0" max="100" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+              <span class="text-xs text-gray-500">điểm</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-gray-700">Thêm người dùng</label>
+            <div class="flex items-center space-x-2">
+              <input type="number" value="15" min="0" max="100" class="w-16 px-2 py-1 border border-gray-300 rounded text-sm">
+              <span class="text-xs text-gray-500">điểm</span>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+              <label class="text-sm font-medium text-gray-700">Ngưỡng Lead nóng</label>
+              <div class="flex items-center space-x-2">
+                <input type="number" value="100" min="50" max="500" class="w-20 px-2 py-1 border border-gray-300 rounded text-sm">
+                <span class="text-xs text-gray-500">điểm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integrations Settings Tab -->
+  <div id="integrations-tab" class="settings-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- CRM Integration -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tích hợp CRM</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Hệ thống CRM</label>
+            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+              <option value="">Chọn CRM</option>
+              <option value="salesforce">Salesforce</option>
+              <option value="hubspot">HubSpot</option>
+              <option value="pipedrive">Pipedrive</option>
+              <option value="zoho">Zoho CRM</option>
+              <option value="custom">Custom API</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+            <input type="password" placeholder="Nhập API key..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+            <input type="url" placeholder="https://your-crm.com/webhook" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Kích hoạt tích hợp</label>
+              <p class="text-xs text-gray-500">Đồng bộ trial data với CRM</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <button onclick="testCRMConnection()" class="w-full px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <i class="fas fa-plug mr-2"></i>Test Connection
+          </button>
+        </div>
+      </div>
+
+      <!-- Analytics Integration -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Analytics & Tracking</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Google Analytics Tracking ID</label>
+            <input type="text" placeholder="UA-XXXXXXXX-X hoặc G-XXXXXXXXXX" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Facebook Pixel ID</label>
+            <input type="text" placeholder="123456789012345" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Track trial events</label>
+              <p class="text-xs text-gray-500">Gửi sự kiện đến analytics</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-gray-700">Events được track:</label>
+            <div class="space-y-1">
+              <label class="flex items-center">
+                <input type="checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Trial Registration</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">First Login</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Feature Usage</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Trial Conversion</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div id="success-banner" class="hidden mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-r-lg" role="alert">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-check-circle text-green-400"></i>
+      </div>
+      <div class="ml-3">
+        <p class="font-medium">Cài đặt đã được lưu thành công!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeSettings();
+  });
+
+  function initializeSettings() {
+    // Initialize any dynamic elements
+    console.log('Settings page initialized');
+  }
+
+  function switchTab(tabName) {
+    // Hide all content tabs
+    document.querySelectorAll('.settings-content').forEach(tab => {
+      tab.classList.add('hidden');
+    });
+
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+      tab.classList.remove('active', 'border-primary-500', 'text-primary-600');
+      tab.classList.add('border-transparent', 'text-gray-500');
+    });
+
+    // Show selected tab content
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+    // Add active class to clicked tab
+    event.target.classList.add('active', 'border-primary-500', 'text-primary-600');
+    event.target.classList.remove('border-transparent', 'text-gray-500');
+  }
+
+  function saveAllSettings() {
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang lưu...';
+    button.disabled = true;
+
+    // Simulate API call
+    setTimeout(() => {
+      // Reset button
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Show success message
+      showSuccessBanner();
+
+      // Show toast
+      showToast('success', 'Thành công', 'Tất cả cài đặt đã được lưu');
+    }, 2000);
+  }
+
+  function resetToDefaults() {
+    if (confirm('Bạn có chắc muốn khôi phục tất cả cài đặt về mặc định? Hành động này không thể hoàn tác.')) {
+      showToast('info', 'Đang khôi phục', 'Đang khôi phục cài đặt mặc định...');
+
+      // Simulate reset
+      setTimeout(() => {
+        showToast('success', 'Thành công', 'Đã khôi phục cài đặt mặc định');
+        location.reload();
+      }, 1500);
+    }
+  }
+
+  function testCRMConnection() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang kiểm tra...';
+    button.disabled = true;
+
+    // Simulate connection test
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Random success/failure
+      if (Math.random() > 0.5) {
+        showToast('success', 'Kết nối thành công', 'CRM connection đã được thiết lập');
+      } else {
+        showToast('error', 'Kết nối thất bại', 'Vui lòng kiểm tra API key và thử lại');
+      }
+    }, 2000);
+  }
+
+  function showSuccessBanner() {
+    const banner = document.getElementById('success-banner');
+    banner.classList.remove('hidden');
+
+    setTimeout(() => {
+      banner.classList.add('hidden');
+    }, 5000);
+  }
+
+  function showToast(type, title, message) {
+    console.log(`${type}: ${title} - ${message}`);
+  }
+</script>
+</body>
+</html>

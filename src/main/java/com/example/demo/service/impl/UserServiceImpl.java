@@ -129,14 +129,18 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+
     @Override
     public List<User> findByRole(String roleName) {
-        Role role = roleRepository.findByNameRole(roleName);
+        Optional<Role> roleOptional = roleRepository.findByNameRole((roleName));
 
-        if (role == null) {
+        if (roleOptional.isPresent()) {
+            Role role = roleOptional.get();
+
+            return userRepository.findByRolesContains(role);
+        } else {
+            System.out.println("Cảnh báo: Không tìm thấy role với tên '" + roleName + "' trong database.");
             return Collections.emptyList();
         }
-
-        return userRepository.findByRolesContains(role);
     }
 }

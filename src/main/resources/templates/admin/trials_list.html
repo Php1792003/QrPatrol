@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html th:replace="~{_layout::layout(title='Tài khoản Trial Hoạt động', content=~{::content}, currentPage='admin_trials')}"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block th:fragment="content">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Tài khoản Trial Hoạt động</h1>
+            <p class="text-gray-600 mt-2">Danh sách các tài khoản trial đang hoạt động và có thể sử dụng</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="refreshData()" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 font-medium flex items-center">
+                <i class="fas fa-sync mr-2"></i>
+                Làm mới
+            </button>
+            <a sec:authorize="hasAuthority('ROLE_ADMIN')" th:href="@{/admin/trials/new}"
+               class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium flex items-center shadow-sm hover:shadow-md">
+                <i class="fas fa-plus mr-2"></i>
+                Thêm Trial Mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-r-lg" role="alert" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert" th:text="${errorMessage}"></div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-user-check text-green-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Tổng Hoạt động</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${totalActiveTrials ?: 0}">247</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Sắp Hết hạn</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${expiringTrials ?: 0}">12</p>
+                        <p class="text-xs text-yellow-600">Trong 7 ngày tới</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-blue-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Hoạt động Cao</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${highActivityTrials ?: 0}">56</p>
+                        <p class="text-xs text-blue-600">Đăng nhập hàng ngày</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-star text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <p class="text-sm font-medium text-gray-500">Tiềm năng</p>
+                        <p class="text-2xl font-bold text-gray-900" th:text="${potentialTrials ?: 0}">34</p>
+                        <p class="text-xs text-purple-600">Lead score > 80</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <form th:action="@{/admin/trials/active}" method="get">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="lg:col-span-2">
+                    <label for="keyword" class="block text-sm font-medium text-gray-700 mb-1">Từ khóa</label>
+                    <input type="text" id="keyword" name="keyword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Tên, email, công ty..." th:value="${keyword}">
+                </div>
+                <div>
+                    <label for="daysLeft" class="block text-sm font-medium text-gray-700 mb-1">Số ngày còn lại</label>
+                    <select id="daysLeft" name="daysLeft" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="">Tất cả</option>
+                        <option value="0-7" th:selected="${daysLeft == '0-7'}">0-7 ngày</option>
+                        <option value="8-14" th:selected="${daysLeft == '8-14'}">8-14 ngày</option>
+                        <option value="15-30" th:selected="${daysLeft == '15-30'}">15-30 ngày</option>
+                        <option value="30+" th:selected="${daysLeft == '30+'}">Hơn 30 ngày</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="companySize" class="block text-sm font-medium text-gray-700 mb-1">Quy mô công ty</label>
+                    <select id="companySize" name="companySize" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="">Tất cả</option>
+                        <option value="1-10" th:selected="${companySize == '1-10'}">1-10 nhân viên</option>
+                        <option value="11-50" th:selected="${companySize == '11-50'}">11-50 nhân viên</option>
+                        <option value="51-200" th:selected="${companySize == '51-200'}">51-200 nhân viên</option>
+                        <option value="200+" th:selected="${companySize == '200+'}">200+ nhân viên</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="highActivity" th:checked="${highActivity}" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-sm text-gray-700">Chỉ hoạt động cao</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="expiringSoon" th:checked="${expiringSoon}" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-sm text-gray-700">Sắp hết hạn</span>
+                    </label>
+                </div>
+                <button type="submit" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 font-medium flex items-center">
+                    <i class="fas fa-search mr-2"></i>Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Trials Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Người dùng</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Công ty</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Tài khoản</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Ngày bắt đầu</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Hết hạn</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Hoạt động</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Lead Score</th>
+                    <th sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">Hành động</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                <tr th:each="trial : ${activeTrialsPage.content}" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8">
+                                <div class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                                    <span class="text-sm font-medium text-white" th:text="${#strings.substring(trial.fullName, 0, 1)}">J</span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <div class="font-medium text-gray-900" th:text="${trial.fullName}">John Doe</div>
+                                <div class="text-gray-600" th:text="${trial.email}">john@example.com</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900" th:text="${trial.companyName}">ABC Company</div>
+                        <div class="text-gray-600" th:text="${trial.industry ?: trial.companySize}">Technology / 1-10 employees</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-mono text-gray-900 font-medium" th:text="${trial.username}">trial001</div>
+                        <div class="text-xs text-gray-500">
+                            <span th:if="${trial.lastLoginAt}" th:text="'Login: ' + ${#temporals.format(trial.lastLoginAt, 'dd/MM HH:mm')}">Login: 15/01 14:30</span>
+                            <span th:unless="${trial.lastLoginAt}" class="text-red-500">Chưa đăng nhập</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-900" th:text="${#temporals.format(trial.startDate, 'dd-MM-yyyy')}">
+                        15/01/2025
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-gray-900" th:text="${#temporals.format(trial.expiryDate, 'dd-MM-yyyy')}">15/02/2025</div>
+                        <div class="text-xs" th:classappend="${trial.daysLeft <= 7} ? 'text-red-600 font-medium' : (${trial.daysLeft <= 14} ? 'text-yellow-600' : 'text-green-600')" th:text="'Còn ' + ${trial.daysLeft} + ' ngày'">
+                            Còn 12 ngày
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div th:classappend="${trial.activityLevel == 'HIGH'} ? 'bg-green-400' : (${trial.activityLevel == 'MEDIUM'} ? 'bg-yellow-400' : 'bg-red-400')" class="w-2 h-2 rounded-full mr-2"></div>
+                            <span th:if="${trial.activityLevel == 'HIGH'}" class="text-green-600 text-sm font-medium">Cao</span>
+                            <span th:if="${trial.activityLevel == 'MEDIUM'}" class="text-yellow-600 text-sm font-medium">Trung bình</span>
+                            <span th:if="${trial.activityLevel == 'LOW'}" class="text-red-600 text-sm font-medium">Thấp</span>
+                        </div>
+                        <div class="text-xs text-gray-500" th:text="${trial.loginCount} + ' lần đăng nhập'">15 lần đăng nhập</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                                <div th:classappend="${trial.leadScore >= 80} ? 'bg-green-500' : (${trial.leadScore >= 60} ? 'bg-yellow-500' : 'bg-red-500')"
+                                     class="h-2 rounded-full" th:style="'width: ' + ${trial.leadScore} + '%'"></div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900" th:text="${trial.leadScore}">85</span>
+                        </div>
+                    </td>
+                    <td sec:authorize="hasAuthority('ROLE_ADMIN')" class="px-6 py-4 text-center">
+                        <div class="flex justify-center items-center space-x-2">
+                            <a th:href="@{/admin/trials/view/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 hover:bg-gray-200"
+                               title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a th:href="@{/admin/trials/extend/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                               title="Gia hạn">
+                                <i class="fas fa-clock"></i>
+                            </a>
+                            <a th:href="@{/admin/trials/login-as/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 hover:bg-blue-200"
+                               title="Đăng nhập với tài khoản này">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </a>
+                            <a th:href="@{/admin/trials/suspend/{id}(id=${trial.id})}"
+                               class="w-8 h-8 rounded-full flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200"
+                               title="Tạm dừng"
+                               onclick="return confirm('Bạn có chắc chắn muốn tạm dừng trial này không?')">
+                                <i class="fas fa-pause"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${activeTrialsPage.isEmpty()}">
+                    <td th:attr="colspan=${#authorization.expression('hasAuthority(''ROLE_ADMIN'')') ? 8 : 7}" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                            <p>Không có trial nào đang hoạt động</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${activeTrialsPage != null && activeTrialsPage.totalPages > 0}" class="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-between sm:px-6">
+            <div class="text-sm text-gray-700">
+                Hiển thị <span class="font-semibold" th:text="${activeTrialsPage.number * activeTrialsPage.size + 1}">1</span>
+                đến <span class="font-semibold" th:text="${activeTrialsPage.number * activeTrialsPage.size + activeTrialsPage.numberOfElements}">20</span>
+                trong <span class="font-semibold" th:text="${activeTrialsPage.totalElements}">247</span> mục
+            </div>
+            <nav th:if="${activeTrialsPage.totalPages > 1}" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <a th:href="@{/admin/trials/active(page=${activeTrialsPage.number - 1}, keyword=${keyword}, daysLeft=${daysLeft}, companySize=${companySize}, highActivity=${highActivity}, expiringSoon=${expiringSoon})}"
+                   th:classappend="${activeTrialsPage.first} ? 'pointer-events-none opacity-50'"
+                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <th:block th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, activeTrialsPage.number - 2), T(java.lang.Math).min(activeTrialsPage.totalPages - 1, activeTrialsPage.number + 2))}">
+                    <a th:href="@{/admin/trials/active(page=${i}, keyword=${keyword}, daysLeft=${daysLeft}, companySize=${companySize}, highActivity=${highActivity}, expiringSoon=${expiringSoon})}"
+                       th:classappend="${i == activeTrialsPage.number} ? 'z-10 bg-primary-50 border-primary-500 text-primary-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">1</a>
+                </th:block>
+                <a th:href="@{/admin/trials/active(page=${activeTrialsPage.number + 1}, keyword=${keyword}, daysLeft=${daysLeft}, companySize=${companySize}, highActivity=${highActivity}, expiringSoon=${expiringSoon})}"
+                   th:classappend="${activeTrialsPage.last} ? 'pointer-events-none opacity-50'"
+                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Quick Actions Panel -->
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Bulk Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Hành động hàng loạt</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Chọn trials cần xử lý</label>
+                    <div class="flex space-x-2">
+                        <button onclick="selectExpiring()" class="px-3 py-2 text-xs bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200">
+                            Chọn sắp hết hạn
+                        </button>
+                        <button onclick="selectHighActivity()" class="px-3 py-2 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200">
+                            Chọn hoạt động cao
+                        </button>
+                        <button onclick="selectLowActivity()" class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200">
+                            Chọn hoạt động thấp
+                        </button>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="bulkExtend()" class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">
+                        <i class="fas fa-clock mr-2"></i>Gia hạn
+                    </button>
+                    <button onclick="bulkEmail()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                        <i class="fas fa-envelope mr-2"></i>Gửi Email
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Thống kê nhanh</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Trung bình ngày sử dụng:</span>
+                    <span class="font-semibold text-gray-900">18.5 ngày</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Tỷ lệ đăng nhập hàng ngày:</span>
+                    <span class="font-semibold text-gray-900">67%</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Lead score trung bình:</span>
+                    <span class="font-semibold text-gray-900">74.2</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Dự kiến chuyển đổi:</span>
+                    <span class="font-semibold text-green-600">89 tài khoản</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</html>

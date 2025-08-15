@@ -1,6 +1,6 @@
 package com.example.demo.service.impl;
 
-import com.example.demo.Model.PenaltyStatus;
+import com.example.demo.Enum.PenaltyStatus;
 import com.example.demo.Model.User;
 import com.example.demo.Model.VehicleViolation;
 import com.example.demo.Repository.UserRepository;

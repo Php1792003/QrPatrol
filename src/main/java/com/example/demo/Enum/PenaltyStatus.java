@@ -1,4 +1,4 @@
-package com.example.demo.Model;
+package com.example.demo.Enum;
 
 public enum PenaltyStatus {
     NHAC_NHO("Nhắc nhở"),

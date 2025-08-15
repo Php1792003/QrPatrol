@@ -68,4 +68,9 @@ public class AppController {
     public String showAboutPage() {
         return "about";
     }
+
+    @GetMapping("/professional")
+    public String showProfesionalPage() {
+        return "professional";
+    }
 }
